@@ -8,7 +8,7 @@ import { Button, Card, Field, Input, Modal, SectionHeader, Select, Textarea } fr
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkTrackData } from '../contexts/WorkTrackDataContext';
 import { MIN_PRODUCTIVE_HOURS } from '../lib/constants';
-import { formatDateTime, withinHours } from '../lib/dates';
+import { formatDateTime, todayInBusinessTz, withinHours } from '../lib/dates';
 import { formatHoursFromMinutes, formatScore } from '../lib/score';
 import type { TaskLog, TaskStatus, TeamMetric } from '../types';
 
