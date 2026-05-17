@@ -1,0 +1,107 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - paragraph [ref=e8]: WorkTrack
+        - paragraph [ref=e9]: Social media operations
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e12]
+        - text: Dashboard
+      - link "Log Task" [ref=e15] [cursor=pointer]:
+        - /url: /tasks
+        - img [ref=e16]
+        - text: Log Task
+      - link "Proposals" [ref=e20] [cursor=pointer]:
+        - /url: /proposals
+        - img [ref=e21]
+        - text: Proposals
+      - link "Leave" [ref=e24] [cursor=pointer]:
+        - /url: /leave
+        - img [ref=e25]
+        - text: Leave
+      - link "Notifications" [ref=e29] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e30]
+        - text: Notifications
+  - banner [ref=e33]:
+    - generic [ref=e34]:
+      - button "Rohan Patel Employee Content" [ref=e36] [cursor=pointer]:
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: Rohan Patel
+          - generic [ref=e39]:
+            - generic [ref=e40]: Employee
+            - generic [ref=e41]: Content
+      - generic [ref=e42]:
+        - button "Notifications" [ref=e43] [cursor=pointer]:
+          - img [ref=e44]
+        - button "Profile" [ref=e47] [cursor=pointer]:
+          - img [ref=e48]
+        - button "Logout" [ref=e51] [cursor=pointer]:
+          - img [ref=e52]
+          - text: Logout
+  - main [ref=e55]:
+    - generic [ref=e56]:
+      - heading "Dashboard" [level=1] [ref=e58]
+      - button "Log a Task" [ref=e59] [cursor=pointer]:
+        - img [ref=e60]
+        - text: Log a Task
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - paragraph [ref=e63]: Today's Progress
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - paragraph [ref=e67]: 2.3h
+            - paragraph [ref=e68]: of 6h productive minimum
+          - paragraph [ref=e69]: 38%
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: Weekly hours
+        - paragraph [ref=e73]: 20.8h
+        - paragraph [ref=e74]: Cumulative scores can exceed 100% across longer periods.
+    - generic [ref=e75]:
+      - generic [ref=e76]:
+        - paragraph [ref=e77]: Tasks completed
+        - paragraph [ref=e78]: "2"
+      - generic [ref=e79]:
+        - paragraph [ref=e80]: In progress
+        - paragraph [ref=e81]: "0"
+      - generic [ref=e82]:
+        - paragraph [ref=e83]: Pending
+        - paragraph [ref=e84]: "0"
+      - generic [ref=e85]:
+        - paragraph [ref=e86]: Minimum target
+        - paragraph [ref=e87]: 6h
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - heading "Today's Task Log" [level=2] [ref=e90]
+        - button "Open full log" [ref=e91] [cursor=pointer]
+      - table [ref=e93]:
+        - rowgroup [ref=e94]:
+          - row "Task Category Time Status Logged Edit" [ref=e95]:
+            - columnheader "Task" [ref=e96]
+            - columnheader "Category" [ref=e97]
+            - columnheader "Time" [ref=e98]
+            - columnheader "Status" [ref=e99]
+            - columnheader "Logged" [ref=e100]
+            - columnheader "Edit" [ref=e101]
+        - rowgroup [ref=e102]:
+          - row "Instagram carousel design Graphic Design 1.5h Done 17 May 2026, 9:31 am Edit" [ref=e103]:
+            - cell "Instagram carousel design" [ref=e104]
+            - cell "Graphic Design" [ref=e105]
+            - cell "1.5h" [ref=e106]
+            - cell "Done" [ref=e107]:
+              - generic [ref=e108]: Done
+            - cell "17 May 2026, 9:31 am" [ref=e109]
+            - cell "Edit" [ref=e110]:
+              - button "Edit" [ref=e111] [cursor=pointer]
+          - row "Caption and hashtag set Copywriting 0.8h Done 17 May 2026, 10:31 am Edit" [ref=e112]:
+            - cell "Caption and hashtag set" [ref=e113]
+            - cell "Copywriting" [ref=e114]
+            - cell "0.8h" [ref=e115]
+            - cell "Done" [ref=e116]:
+              - generic [ref=e117]: Done
+            - cell "17 May 2026, 10:31 am" [ref=e118]
+            - cell "Edit" [ref=e119]:
+              - button "Edit" [ref=e120] [cursor=pointer]

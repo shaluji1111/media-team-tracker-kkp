@@ -1,0 +1,144 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - paragraph [ref=e8]: WorkTrack
+        - paragraph [ref=e9]: Social media operations
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e12]
+        - text: Dashboard
+      - link "Leave" [ref=e15] [cursor=pointer]:
+        - /url: /leave
+        - img [ref=e16]
+        - text: Leave
+      - link "Notifications" [ref=e20] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e21]
+        - text: Notifications
+      - link "Users" [ref=e24] [cursor=pointer]:
+        - /url: /users
+        - img [ref=e25]
+        - text: Users
+      - link "Tasks" [ref=e30] [cursor=pointer]:
+        - /url: /task-library
+        - img [ref=e31]
+        - text: Tasks
+      - link "Approvals" [ref=e33] [cursor=pointer]:
+        - /url: /approvals
+        - img [ref=e34]
+        - text: Approvals
+      - link "Reports" [ref=e38] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e39]
+        - text: Reports
+      - link "Broadcasts" [ref=e41] [cursor=pointer]:
+        - /url: /broadcasts
+        - img [ref=e42]
+        - text: Broadcasts
+      - link "Audit Log" [ref=e45] [cursor=pointer]:
+        - /url: /audit-log
+        - img [ref=e46]
+        - text: Audit Log
+      - link "Settings" [ref=e49] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e50]
+        - text: Settings
+  - banner [ref=e53]:
+    - generic [ref=e54]:
+      - button "Aarav Mehta Super Admin Operations" [ref=e56] [cursor=pointer]:
+        - generic [ref=e57]:
+          - paragraph [ref=e58]: Aarav Mehta
+          - generic [ref=e59]:
+            - generic [ref=e60]: Super Admin
+            - generic [ref=e61]: Operations
+      - generic [ref=e62]:
+        - button "Notifications" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]
+        - button "Profile" [ref=e67] [cursor=pointer]:
+          - img [ref=e68]
+        - button "Logout" [ref=e71] [cursor=pointer]:
+          - img [ref=e72]
+          - text: Logout
+  - main [ref=e75]:
+    - heading "Super Admin Dashboard" [level=1] [ref=e78]
+    - generic [ref=e79]:
+      - generic [ref=e80]:
+        - paragraph [ref=e81]: Team hours today
+        - paragraph [ref=e82]: "6.8"
+      - generic [ref=e83]:
+        - paragraph [ref=e84]: Employees flagged
+        - paragraph [ref=e85]: "3"
+      - generic [ref=e86]:
+        - paragraph [ref=e87]: Pending proposals
+        - paragraph [ref=e88]: "2"
+      - generic [ref=e89]:
+        - paragraph [ref=e90]: Pending leave
+        - paragraph [ref=e91]: "1"
+      - generic [ref=e92]:
+        - paragraph [ref=e93]: Tasks logged
+        - paragraph [ref=e94]: "4"
+    - generic [ref=e95]:
+      - generic [ref=e96]:
+        - heading "Full Team" [level=2] [ref=e97]
+        - paragraph [ref=e98]: 3 employees
+      - table [ref=e100]:
+        - rowgroup [ref=e101]:
+          - row "Name Role Department Hours Score Status" [ref=e102]:
+            - columnheader "Name" [ref=e103]
+            - columnheader "Role" [ref=e104]
+            - columnheader "Department" [ref=e105]
+            - columnheader "Hours" [ref=e106]
+            - columnheader "Score" [ref=e107]
+            - columnheader "Status" [ref=e108]
+        - rowgroup [ref=e109]:
+          - row "Nisha Rao manager Social Media - 36% No Data" [ref=e110]:
+            - cell "Nisha Rao" [ref=e111]
+            - cell "manager" [ref=e112]
+            - cell "Social Media" [ref=e113]
+            - cell "-" [ref=e114]
+            - cell "36%" [ref=e115]
+            - cell "No Data" [ref=e116]:
+              - generic [ref=e117]: No Data
+          - row "Kabir Shah team_lead Content - 40% No Data" [ref=e118]:
+            - cell "Kabir Shah" [ref=e119]
+            - cell "team_lead" [ref=e120]
+            - cell "Content" [ref=e121]
+            - cell "-" [ref=e122]
+            - cell "40%" [ref=e123]
+            - cell "No Data" [ref=e124]:
+              - generic [ref=e125]: No Data
+          - row "Maya Iyer team_lead Video - 33% No Data" [ref=e126]:
+            - cell "Maya Iyer" [ref=e127]
+            - cell "team_lead" [ref=e128]
+            - cell "Video" [ref=e129]
+            - cell "-" [ref=e130]
+            - cell "33%" [ref=e131]
+            - cell "No Data" [ref=e132]:
+              - generic [ref=e133]: No Data
+          - row "Rohan Patel employee Content 2.3 38% Flagged" [ref=e134]:
+            - cell "Rohan Patel" [ref=e135]
+            - cell "employee" [ref=e136]
+            - cell "Content" [ref=e137]
+            - cell "2.3" [ref=e138]
+            - cell "38%" [ref=e139]
+            - cell "Flagged" [ref=e140]:
+              - generic [ref=e141]: Flagged
+          - row "Sara Khan employee Content 2.5 42% Flagged" [ref=e142]:
+            - cell "Sara Khan" [ref=e143]
+            - cell "employee" [ref=e144]
+            - cell "Content" [ref=e145]
+            - cell "2.5" [ref=e146]
+            - cell "42%" [ref=e147]
+            - cell "Flagged" [ref=e148]:
+              - generic [ref=e149]: Flagged
+          - row "Dev Menon employee Video 2.0 33% Flagged" [ref=e150]:
+            - cell "Dev Menon" [ref=e151]
+            - cell "employee" [ref=e152]
+            - cell "Video" [ref=e153]
+            - cell "2.0" [ref=e154]
+            - cell "33%" [ref=e155]
+            - cell "Flagged" [ref=e156]:
+              - generic [ref=e157]: Flagged

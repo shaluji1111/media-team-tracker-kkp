@@ -1,0 +1,140 @@
+- generic [ref=e374]:
+  - complementary [ref=e375]:
+    - generic [ref=e376]:
+      - generic [ref=e377]: W
+      - generic [ref=e378]:
+        - paragraph [ref=e379]: WorkTrack
+        - paragraph [ref=e380]: Social media operations
+    - navigation [ref=e381]:
+      - link "Dashboard" [ref=e382] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e383]
+        - text: Dashboard
+      - link "Notifications" [ref=e386] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e387]
+        - text: Notifications
+      - link "Users" [ref=e390] [cursor=pointer]:
+        - /url: /users
+        - img [ref=e391]
+        - text: Users
+      - link "Tasks" [ref=e396] [cursor=pointer]:
+        - /url: /task-library
+        - img [ref=e397]
+        - text: Tasks
+      - link "Approvals" [ref=e399] [cursor=pointer]:
+        - /url: /approvals
+        - img [ref=e400]
+        - text: Approvals
+      - link "Reports" [active] [ref=e404] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e405]
+        - text: Reports
+      - link "Broadcasts" [ref=e407] [cursor=pointer]:
+        - /url: /broadcasts
+        - img [ref=e408]
+        - text: Broadcasts
+      - link "Audit Log" [ref=e411] [cursor=pointer]:
+        - /url: /audit-log
+        - img [ref=e412]
+        - text: Audit Log
+      - link "Settings" [ref=e415] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e416]
+        - text: Settings
+  - banner [ref=e419]:
+    - generic [ref=e420]:
+      - button "Aarav Mehta Super Admin Operations" [ref=e422] [cursor=pointer]:
+        - generic [ref=e423]:
+          - paragraph [ref=e424]: Aarav Mehta
+          - generic [ref=e425]:
+            - generic [ref=e426]: Super Admin
+            - generic [ref=e427]: Operations
+      - generic [ref=e428]:
+        - button "Notifications" [ref=e429] [cursor=pointer]:
+          - img [ref=e430]
+        - button "Profile" [ref=e433] [cursor=pointer]:
+          - img [ref=e434]
+        - button "Logout" [ref=e437] [cursor=pointer]:
+          - img [ref=e438]
+          - text: Logout
+  - main [ref=e441]:
+    - generic [ref=e524]:
+      - heading "Reports" [level=1] [ref=e526]
+      - generic [ref=e527]:
+        - button "CSV" [ref=e528] [cursor=pointer]:
+          - img [ref=e529]
+          - text: CSV
+        - button "PDF" [ref=e532] [cursor=pointer]:
+          - img [ref=e533]
+          - text: PDF
+    - generic [ref=e538]:
+      - generic [ref=e539]:
+        - generic [ref=e540]: Report type
+        - combobox "Report type" [ref=e541]:
+          - option "Daily" [selected]
+          - option "Weekly"
+          - option "Monthly"
+      - generic [ref=e542]:
+        - generic [ref=e543]: Search
+        - textbox "Search" [ref=e544]:
+          - /placeholder: Name, role, department
+      - generic [ref=e545]:
+        - generic [ref=e546]: Status
+        - combobox "Status" [ref=e547]:
+          - option "All" [selected]
+          - option "On Track"
+          - option "At Risk"
+          - option "Flagged"
+          - option "No Data"
+      - generic [ref=e548]:
+        - generic [ref=e549]: Date
+        - textbox "Date" [ref=e550]: 2026-05-17
+    - generic [ref=e551]:
+      - generic [ref=e552]:
+        - paragraph [ref=e553]: Top performer
+        - paragraph [ref=e554]: Rohan Patel
+      - generic [ref=e555]:
+        - paragraph [ref=e556]: Average hours/day
+        - paragraph [ref=e557]: 2.8h
+      - generic [ref=e558]:
+        - paragraph [ref=e559]: Total tasks completed
+        - paragraph [ref=e560]: "5"
+    - table [ref=e563]:
+      - rowgroup [ref=e564]:
+        - row "Employee Role Department Tasks Hours Score Status" [ref=e565]:
+          - columnheader "Employee" [ref=e566]
+          - columnheader "Role" [ref=e567]
+          - columnheader "Department" [ref=e568]
+          - columnheader "Tasks" [ref=e569]
+          - columnheader "Hours" [ref=e570]
+          - columnheader "Score" [ref=e571]
+          - columnheader "Status" [ref=e572]
+      - rowgroup [ref=e573]:
+        - row "Rohan Patel Employee Content 3 3.8 63% At Risk" [ref=e574]:
+          - cell "Rohan Patel" [ref=e575]
+          - cell "Employee" [ref=e576]
+          - cell "Content" [ref=e577]
+          - cell "3" [ref=e578]
+          - cell "3.8" [ref=e579]
+          - cell "63%" [ref=e580]
+          - cell "At Risk" [ref=e581]:
+            - generic [ref=e582]: At Risk
+        - row "Sara Khan Employee Content 1 2.5 42% Flagged" [ref=e583]:
+          - cell "Sara Khan" [ref=e584]
+          - cell "Employee" [ref=e585]
+          - cell "Content" [ref=e586]
+          - cell "1" [ref=e587]
+          - cell "2.5" [ref=e588]
+          - cell "42%" [ref=e589]
+          - cell "Flagged" [ref=e590]:
+            - generic [ref=e591]: Flagged
+        - row "Dev Menon Employee Video 1 2.0 33% Flagged" [ref=e592]:
+          - cell "Dev Menon" [ref=e593]
+          - cell "Employee" [ref=e594]
+          - cell "Video" [ref=e595]
+          - cell "1" [ref=e596]
+          - cell "2.0" [ref=e597]
+          - cell "33%" [ref=e598]
+          - cell "Flagged" [ref=e599]:
+            - generic [ref=e600]: Flagged

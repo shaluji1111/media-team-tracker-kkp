@@ -1,0 +1,91 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - button "Open menu" [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+        - button "W Aarav Mehta Super Admin" [ref=e9] [cursor=pointer]:
+          - generic [ref=e10]: W
+          - generic [ref=e11]:
+            - paragraph [ref=e12]: Aarav Mehta
+            - generic [ref=e14]: Super Admin
+      - generic [ref=e15]:
+        - button "Notifications" [ref=e16] [cursor=pointer]:
+          - img [ref=e17]
+        - button "Profile" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+        - button "Logout" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+          - text: Logout
+  - main [ref=e28]:
+    - heading "Audit Log" [level=1] [ref=e31]
+    - generic [ref=e32]:
+      - textbox "Search audit events" [ref=e34]
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - paragraph [ref=e38]: user created
+            - generic [ref=e39]: 12 Jan 2026, 2:30 pm
+          - paragraph [ref=e40]: Aarav Mehta acted on Dev Menon
+          - generic [ref=e41]: "{ \"role\": \"employee\", \"team_lead\": \"Maya Iyer\" }"
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - paragraph [ref=e44]: proposal reviewed
+            - generic [ref=e45]: 17 May 2026, 10:27 am
+          - paragraph [ref=e46]: Maya Iyer acted on Motion template cleanup
+          - generic [ref=e47]: "{ \"from\": \"pending_tl\", \"to\": \"pending_manager\" }"
+  - navigation [ref=e48]:
+    - generic [ref=e49]:
+      - link "Dashboard" [ref=e50] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e51]
+        - generic [ref=e54]: Dashboard
+      - link "Users" [ref=e55] [cursor=pointer]:
+        - /url: /users
+        - img [ref=e56]
+        - generic [ref=e61]: Users
+      - link "Tasks" [ref=e62] [cursor=pointer]:
+        - /url: /task-library
+        - img [ref=e63]
+        - generic [ref=e65]: Tasks
+      - link "Approvals" [ref=e66] [cursor=pointer]:
+        - /url: /approvals
+        - img [ref=e67]
+        - generic [ref=e71]: Approvals
+      - link "Reports" [ref=e72] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e73]
+        - generic [ref=e75]: Reports
+      - button "More" [active] [ref=e76] [cursor=pointer]:
+        - img [ref=e77]
+        - text: More
+  - generic [ref=e81]:
+    - generic [ref=e82]:
+      - generic [ref=e83]:
+        - paragraph [ref=e84]: More
+        - paragraph [ref=e85]: Super Admin
+      - button "Close" [ref=e86] [cursor=pointer]
+    - generic [ref=e87]:
+      - link "Leave" [ref=e88] [cursor=pointer]:
+        - /url: /leave
+        - img [ref=e89]
+        - text: Leave
+      - link "Notifications" [ref=e93] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e94]
+        - text: Notifications
+      - link "Broadcasts" [ref=e97] [cursor=pointer]:
+        - /url: /broadcasts
+        - img [ref=e98]
+        - text: Broadcasts
+      - link "Audit Log" [ref=e101] [cursor=pointer]:
+        - /url: /audit-log
+        - img [ref=e102]
+        - text: Audit Log
+      - link "Settings" [ref=e105] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e106]
+        - text: Settings
+      - button "Logout" [ref=e109] [cursor=pointer]:
+        - img [ref=e110]
+        - text: Logout

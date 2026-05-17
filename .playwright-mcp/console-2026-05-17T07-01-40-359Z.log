@@ -1,0 +1,138 @@
+[      60ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[    7802ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[    7901ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[    7979ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[    8113ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[    8146ms] RangeError: Invalid time value
+    at formatDate (http://127.0.0.1:3000/src/lib/dates.ts:20:5)
+    at http://127.0.0.1:3000/src/pages/ManagementPages.tsx?t=1779000574966:1403:18
+    at Array.map (<anonymous>)
+    at UsersPage (http://127.0.0.1:3000/src/pages/ManagementPages.tsx?t=1779000574966:1355:22)
+    at Object.react_stack_bottom_frame (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:12868:12)
+    at renderWithHooks (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:4213:19)
+    at updateFunctionComponent (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:5569:16)
+    at beginWork (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:6140:20)
+    at runWithFiberInDEV (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:851:66)
+    at performUnitOfWork (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:8429:92)
+[    8144ms] [WARNING] %s
+
+%s
+ An error occurred in the <UsersPage> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:3000/@vite/client:509
+[   19592ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://127.0.0.1:3000/src/contexts/AuthContext.tsx?t=1779000574960:245:9)
+    at App (http://127.0.0.1:3000/src/App.tsx?t=1779001063176:13:28)
+    at Object.react_stack_bottom_frame (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:12868:12)
+    at renderWithHooks (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:4213:19)
+    at updateFunctionComponent (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:5569:16)
+    at beginWork (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:6140:20)
+    at runWithFiberInDEV (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:851:66)
+    at performUnitOfWork (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:8429:92)
+    at workLoopSync (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:8325:37)
+    at renderRootSync (http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:8309:6)
+[   19592ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:3000/@vite/client:509
+[   19652ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   44551ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   44648ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   44711ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[   44841ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   45038ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   45228ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   45426ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   45660ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   45859ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   46064ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   46259ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   46466ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   46675ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   46880ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   47079ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   47179ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   47247ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[   47396ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   47581ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   47764ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   47967ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   48160ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   48363ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   48576ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   48665ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   48713ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[   48866ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   49066ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   49276ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   49476ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   49659ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   49848ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   50026ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   50116ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   50160ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[   50316ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   50520ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   50750ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   50958ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   51152ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   51365ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[   84471ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  166359ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  227776ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  227909ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  228015ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  228167ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  228393ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  228612ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  228817ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  229035ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  229267ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  229465ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  229688ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  229919ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  230124ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  230376ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  230602ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  230703ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  230760ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  230912ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  231116ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  231311ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  231536ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  231768ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  231969ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  232170ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  232268ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  232327ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  232477ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  232720ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  232924ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  233151ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  233383ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  233600ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  233799ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  233909ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  233966ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  234114ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  234318ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  234528ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  234748ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  234961ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  235181ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  253744ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  253847ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  253919ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  254550ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  254659ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  254729ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  254866ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  255015ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  268400ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  268520ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  268584ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  268719ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  306085ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  306192ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337
+[  306252ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) @ http://127.0.0.1:3000/login:0
+[  306383ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/node_modules/.vite/deps/react-dom_client.js?v=e777d3cc:14337

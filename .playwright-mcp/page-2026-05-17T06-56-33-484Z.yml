@@ -1,0 +1,78 @@
+- generic [ref=e374]:
+  - complementary [ref=e375]:
+    - generic [ref=e376]:
+      - generic [ref=e377]: W
+      - generic [ref=e378]:
+        - paragraph [ref=e379]: WorkTrack
+        - paragraph [ref=e380]: Social media operations
+    - navigation [ref=e381]:
+      - link "Dashboard" [ref=e382] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e383]
+        - text: Dashboard
+      - link "Notifications" [ref=e386] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e387]
+        - text: Notifications
+      - link "Users" [ref=e390] [cursor=pointer]:
+        - /url: /users
+        - img [ref=e391]
+        - text: Users
+      - link "Tasks" [ref=e396] [cursor=pointer]:
+        - /url: /task-library
+        - img [ref=e397]
+        - text: Tasks
+      - link "Approvals" [ref=e399] [cursor=pointer]:
+        - /url: /approvals
+        - img [ref=e400]
+        - text: Approvals
+      - link "Reports" [ref=e404] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e405]
+        - text: Reports
+      - link "Broadcasts" [active] [ref=e407] [cursor=pointer]:
+        - /url: /broadcasts
+        - img [ref=e408]
+        - text: Broadcasts
+      - link "Audit Log" [ref=e411] [cursor=pointer]:
+        - /url: /audit-log
+        - img [ref=e412]
+        - text: Audit Log
+      - link "Settings" [ref=e415] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e416]
+        - text: Settings
+  - banner [ref=e419]:
+    - generic [ref=e420]:
+      - button "Aarav Mehta Super Admin Operations" [ref=e422] [cursor=pointer]:
+        - generic [ref=e423]:
+          - paragraph [ref=e424]: Aarav Mehta
+          - generic [ref=e425]:
+            - generic [ref=e426]: Super Admin
+            - generic [ref=e427]: Operations
+      - generic [ref=e428]:
+        - button "Notifications" [ref=e429] [cursor=pointer]:
+          - img [ref=e430]
+        - button "Profile" [ref=e433] [cursor=pointer]:
+          - img [ref=e434]
+        - button "Logout" [ref=e437] [cursor=pointer]:
+          - img [ref=e438]
+          - text: Logout
+  - main [ref=e441]:
+    - heading "Broadcasts" [level=1] [ref=e603]
+    - generic [ref=e605]:
+      - generic [ref=e606]:
+        - generic [ref=e607]: Message
+        - textbox "Message" [ref=e608]
+      - generic [ref=e609]:
+        - generic [ref=e610]: Target
+        - combobox "Target" [ref=e611]:
+          - option "All" [selected]
+          - option "Employees only"
+          - option "Team Leads"
+          - option "Managers"
+          - option "Super Admins"
+      - paragraph [ref=e612]: 7 active recipients
+      - button "Review broadcast" [disabled] [ref=e613]:
+        - img [ref=e614]
+        - text: Review broadcast

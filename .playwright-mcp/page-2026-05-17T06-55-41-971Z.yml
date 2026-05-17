@@ -1,0 +1,145 @@
+- generic [ref=e185]:
+  - complementary [ref=e186]:
+    - generic [ref=e187]:
+      - generic [ref=e188]: W
+      - generic [ref=e189]:
+        - paragraph [ref=e190]: WorkTrack
+        - paragraph [ref=e191]: Social media operations
+    - navigation [ref=e192]:
+      - link "Dashboard" [ref=e193] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e194]
+        - text: Dashboard
+      - link "Log Task" [ref=e197] [cursor=pointer]:
+        - /url: /tasks
+        - img [ref=e198]
+        - text: Log Task
+      - link "Proposals" [ref=e202] [cursor=pointer]:
+        - /url: /proposals
+        - img [ref=e203]
+        - text: Proposals
+      - link "Leave" [ref=e206] [cursor=pointer]:
+        - /url: /leave
+        - img [ref=e207]
+        - text: Leave
+      - link "Notifications" [ref=e211] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e212]
+        - text: Notifications
+  - banner [ref=e215]:
+    - generic [ref=e216]:
+      - button "Rohan Patel Employee Content" [ref=e218] [cursor=pointer]:
+        - generic [ref=e219]:
+          - paragraph [ref=e220]: Rohan Patel
+          - generic [ref=e221]:
+            - generic [ref=e222]: Employee
+            - generic [ref=e223]: Content
+      - generic [ref=e224]:
+        - button "Notifications" [ref=e225] [cursor=pointer]:
+          - img [ref=e226]
+        - button "Profile" [ref=e229] [cursor=pointer]:
+          - img [ref=e230]
+        - button "Logout" [ref=e233] [cursor=pointer]:
+          - img [ref=e234]
+          - text: Logout
+  - main [ref=e237]:
+    - generic [ref=e238]:
+      - heading "Dashboard" [level=1] [ref=e240]
+      - button "Log a Task" [active] [ref=e241] [cursor=pointer]:
+        - img [ref=e242]
+        - text: Log a Task
+    - generic [ref=e243]:
+      - generic [ref=e244]:
+        - paragraph [ref=e245]: Today's Progress
+        - generic [ref=e247]:
+          - generic [ref=e248]:
+            - paragraph [ref=e249]: 2.3h
+            - paragraph [ref=e250]: of 6h productive minimum
+          - paragraph [ref=e251]: 38%
+      - generic [ref=e254]:
+        - paragraph [ref=e255]: Weekly hours
+        - paragraph [ref=e256]: 20.8h
+        - paragraph [ref=e257]: Cumulative scores can exceed 100% across longer periods.
+    - generic [ref=e258]:
+      - generic [ref=e259]:
+        - paragraph [ref=e260]: Tasks completed
+        - paragraph [ref=e261]: "2"
+      - generic [ref=e262]:
+        - paragraph [ref=e263]: In progress
+        - paragraph [ref=e264]: "0"
+      - generic [ref=e265]:
+        - paragraph [ref=e266]: Pending
+        - paragraph [ref=e267]: "0"
+      - generic [ref=e268]:
+        - paragraph [ref=e269]: Minimum target
+        - paragraph [ref=e270]: 6h
+    - generic [ref=e271]:
+      - generic [ref=e272]:
+        - heading "Today's Task Log" [level=2] [ref=e273]
+        - button "Open full log" [ref=e274] [cursor=pointer]
+      - table [ref=e276]:
+        - rowgroup [ref=e277]:
+          - row "Task Category Time Status Logged Edit" [ref=e278]:
+            - columnheader "Task" [ref=e279]
+            - columnheader "Category" [ref=e280]
+            - columnheader "Time" [ref=e281]
+            - columnheader "Status" [ref=e282]
+            - columnheader "Logged" [ref=e283]
+            - columnheader "Edit" [ref=e284]
+        - rowgroup [ref=e285]:
+          - row "Instagram carousel design Graphic Design 1.5h Done 17 May 2026, 9:25 am Edit" [ref=e286]:
+            - cell "Instagram carousel design" [ref=e287]
+            - cell "Graphic Design" [ref=e288]
+            - cell "1.5h" [ref=e289]
+            - cell "Done" [ref=e290]:
+              - generic [ref=e291]: Done
+            - cell "17 May 2026, 9:25 am" [ref=e292]
+            - cell "Edit" [ref=e293]:
+              - button "Edit" [ref=e294] [cursor=pointer]
+          - row "Caption and hashtag set Copywriting 0.8h Done 17 May 2026, 10:25 am Edit" [ref=e295]:
+            - cell "Caption and hashtag set" [ref=e296]
+            - cell "Copywriting" [ref=e297]
+            - cell "0.8h" [ref=e298]
+            - cell "Done" [ref=e299]:
+              - generic [ref=e300]: Done
+            - cell "17 May 2026, 10:25 am" [ref=e301]
+            - cell "Edit" [ref=e302]:
+              - button "Edit" [ref=e303] [cursor=pointer]
+    - generic [ref=e305]:
+      - generic [ref=e306]:
+        - heading "Log a Task" [level=2] [ref=e307]
+        - button "Close modal" [ref=e308] [cursor=pointer]: Close
+      - generic [ref=e309]:
+        - generic [ref=e310]:
+          - button "flat" [ref=e311] [cursor=pointer]
+          - button "category" [ref=e312] [cursor=pointer]
+          - button "platform" [ref=e313] [cursor=pointer]
+        - generic [ref=e314]:
+          - generic [ref=e315]: Search tasks
+          - textbox "Search tasks" [ref=e316]:
+            - /placeholder: Search by task, category, platform
+        - generic [ref=e317]:
+          - generic [ref=e318]: Task (flat view)
+          - combobox "Task (flat view)" [ref=e319]:
+            - option "Instagram carousel design - Graphic Design - Instagram" [selected]
+            - option "Short-form video edit - Video Editing - TikTok"
+            - option "Caption and hashtag set - Copywriting - General"
+            - option "Weekly content calendar - Strategy - General"
+        - generic [ref=e320]:
+          - generic [ref=e321]: Predefined time
+          - textbox "Predefined time" [ref=e322]: 90 minutes
+        - generic [ref=e323]:
+          - generic [ref=e324]: Status
+          - combobox "Status" [ref=e325]:
+            - option "Done" [selected]
+            - option "In Progress"
+            - option "Pending"
+        - generic [ref=e326]:
+          - generic [ref=e327]: Project tag
+          - textbox "Project tag" [ref=e328]:
+            - /placeholder: Optional
+        - generic [ref=e329]:
+          - generic [ref=e330]: Notes
+          - textbox "Notes" [ref=e331]:
+            - /placeholder: Optional
+        - button "Submit task" [ref=e332] [cursor=pointer]

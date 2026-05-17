@@ -1,0 +1,31 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: W
+      - heading "WorkTrack" [level=1] [ref=e8]
+      - paragraph [ref=e9]: Sign in with your JSID and password.
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: JSID
+        - textbox "JSID" [ref=e13]:
+          - /placeholder: JS-XXXX
+          - text: JS-3001
+      - generic [ref=e14]:
+        - generic [ref=e15]: Password
+        - generic [ref=e16]:
+          - textbox "Password Show password" [ref=e17]: password
+          - button "Show password" [ref=e18] [cursor=pointer]:
+            - img [ref=e19]
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - checkbox "Remember me" [checked] [ref=e24]
+          - text: Remember me
+        - link "Forgot password" [ref=e25] [cursor=pointer]:
+          - /url: /forgot-password
+      - paragraph [ref=e26]: "Demo mode: use JS-0001, JS-1001, JS-2001, or JS-3001 with password \"password\"."
+      - button "Sign in" [ref=e27] [cursor=pointer]:
+        - img [ref=e28]
+        - text: Sign in
+      - button "Self-register" [ref=e31] [cursor=pointer]:
+        - img [ref=e32]
+        - text: Self-register
