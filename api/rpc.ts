@@ -1,4 +1,4 @@
-import { createClient } from '@libsql/client';
+import { createClient } from '@libsql/client/web';
 
 export const config = {
   runtime: 'edge', // use edge for lower latency with turso
