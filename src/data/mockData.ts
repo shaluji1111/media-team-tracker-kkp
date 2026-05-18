@@ -2,6 +2,7 @@ import { todayInBusinessTz } from '../lib/dates';
 import { averageNullable, employeeDailyScore, statusForMinutes } from '../lib/score';
 import type {
   AppUser,
+  ApprovedCustomTask,
   AuditEvent,
   CustomTaskProposal,
   LeaveRequest,
