@@ -146,20 +146,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!isSupabaseConfigured || !supabase) {
       try {
-        const res = await fetch('/api/rpc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'execute',
-            payload: {
-              sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
-              args: [jsid, password]
-            }
-          })
+        const { createClient } = await import('@libsql/client/web');
+        const client = createClient({
+          url: import.meta.env.VITE_TURSO_DATABASE_URL,
+          authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN,
         });
-        const data = await res.json();
-        if (data.success && data.result.rows && data.result.rows.length > 0) {
-          const matchedUser = data.result.rows[0] as AppUser;
+        const data = await client.execute({
+          sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
+          args: [jsid, password]
+        });
+        if (data.rows && data.rows.length > 0) {
+          const matchedUser = data.rows[0] as unknown as AppUser;
           if (matchedUser.status !== 'active') {
             throw new Error('This account is not active.');
           }
