@@ -145,9 +145,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (!isSupabaseConfigured || !supabase) {
+      try {
+        const res = await fetch('/api/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'execute',
+            payload: {
+              sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
+              args: [jsid, password]
+            }
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.result.rows && data.result.rows.length > 0) {
+          const matchedUser = data.result.rows[0] as AppUser;
+          if (matchedUser.status !== 'active') {
+            throw new Error('This account is not active.');
+          }
+          setUser(matchedUser);
+          if (remember) {
+            localStorage.setItem(DEMO_USER_KEY, JSON.stringify(matchedUser));
+          } else {
+            sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(matchedUser));
+          }
+          return;
+        }
+      } catch (err) {
+        console.error('Turso login failed, falling back to demo', err);
+      }
+
       const demo = demoUsers.find((candidate) => candidate.jsid === jsid);
       if (!demo || !['password', 'demo', 'worktrack'].includes(password)) {
-        throw new Error('Use a demo JSID and password "password" when Supabase is not configured.');
+        throw new Error('Invalid JSID or password.');
       }
       if (demo.status !== 'active') {
         throw new Error('This account is not active.');
