@@ -421,7 +421,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
       submitPasswordResetRequest: (jsidInput) => {
         const jsid = normalizeJsid(jsidInput);
         if (!isValidJsid(jsid)) {
-          throw new Error('Enter a valid JSID in JS-XXXX format.');
+          throw new Error('Enter a valid JSID (e.g., JS0001 or JS21587).');
         }
         const target = users.find((candidate) => candidate.jsid === jsid && candidate.status === 'active');
         if (!target) {

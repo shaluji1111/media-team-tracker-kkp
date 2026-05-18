@@ -26,8 +26,8 @@ export function LoginPage() {
     event.preventDefault();
     setError('');
     const normalized = normalizeJsid(jsid);
-    if (!isValidJsid(normalized)) {
-      setError('Enter a valid JSID in JS0001 format.');
+    if (!isValidJsid(jsid)) {
+      setError('Enter a valid JSID (e.g., JS0001 or JS21587).');
       return;
     }
     setLoading(true);

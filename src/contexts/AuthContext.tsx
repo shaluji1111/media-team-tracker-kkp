@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (jsidInput: string, password: string, remember: boolean) => {
     const jsid = normalizeJsid(jsidInput);
     if (!isValidJsid(jsid)) {
-      throw new Error('Enter a valid JSID in JS-XXXX format.');
+      throw new Error('Enter a valid JSID (e.g., JS0001 or JS21587).');
     }
 
     if (!isSupabaseConfigured || !supabase) {
@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const requestPasswordReset = useCallback(async (jsidInput: string) => {
     const jsid = normalizeJsid(jsidInput);
     if (!isValidJsid(jsid)) {
-      throw new Error('Enter a valid JSID in JS-XXXX format.');
+      throw new Error('Enter a valid JSID (e.g., JS0001 or JS21587).');
     }
     if (!supabase) {
       return;
