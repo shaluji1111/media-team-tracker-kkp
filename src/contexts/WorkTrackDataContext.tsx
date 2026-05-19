@@ -500,19 +500,20 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         const proposal = proposals.find(p => p.id === proposalId);
         if (!proposal) return;
 
-        const finalStatus: CustomTaskProposal['status'] = approve
-          ? proposal.status === 'pending_tl' && actor.role === 'team_lead'
-            ? 'pending_manager'
-            : 'approved'
-          : 'rejected';
+        const finalStatus: CustomTaskProposal['status'] = approve ? 'approved' : 'rejected';
           
-        const existingApprovedTask = approvedCustomTasks.find(
-          (task) =>
+        const proposalMatchesApprovedTask = (task: ApprovedCustomTask) =>
             task.employee_id === proposal.employee_id &&
             task.task_name === proposal.task_name &&
-            task.category === proposal.category &&
-            !task.is_deleted,
-        );
+            task.category === proposal.category;
+        const proposalMatchesCustomLog = (log: TaskLog) =>
+          log.employee_id === proposal.employee_id &&
+          log.is_custom &&
+          log.task_name === proposal.task_name &&
+          log.category === proposal.category;
+
+        const matchingApprovedTasks = approvedCustomTasks.filter(proposalMatchesApprovedTask);
+        const existingApprovedTask = matchingApprovedTasks.find((task) => !task.is_deleted);
         let customTaskDetails: ApprovedCustomTask | null = null;
         if (finalStatus === 'approved' && !existingApprovedTask) {
           customTaskDetails = {
@@ -527,10 +528,49 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           setApprovedCustomTasks((customTasks) => [customTaskDetails as ApprovedCustomTask, ...customTasks]);
         }
 
-        // If rejected and there was a previously approved version, soft-delete it from employee's dashboard
-        if (finalStatus === 'rejected' && existingApprovedTask) {
+        const approvedTaskForLog = customTaskDetails ?? existingApprovedTask ?? null;
+        const alreadyLoggedApprovedTask = approvedTaskForLog
+          ? taskLogs.some(
+              (log) =>
+                log.employee_id === approvedTaskForLog.employee_id &&
+                log.approved_custom_task_id === approvedTaskForLog.id,
+            )
+          : false;
+        const autoLog: TaskLog | null =
+          finalStatus === 'approved' && approvedTaskForLog && !alreadyLoggedApprovedTask
+            ? {
+                id: id('log'),
+                employee_id: approvedTaskForLog.employee_id,
+                task_library_id: null,
+                approved_custom_task_id: approvedTaskForLog.id,
+                task_name: approvedTaskForLog.task_name,
+                category: approvedTaskForLog.category,
+                platform_tag: 'Custom',
+                task_time_snapshot: approvedTaskForLog.time_minutes,
+                status: 'done',
+                notes: `Auto-logged on approval by ${actor.name}`,
+                proof_url: null,
+                project_tag: null,
+                logged_at: new Date().toISOString(),
+                is_custom: true,
+              }
+            : null;
+        if (autoLog) {
+          setTaskLogs((current) => [autoLog, ...current]);
+        }
+
+        // If rejected and there was a previously approved version, remove it and its time from the employee.
+        if (finalStatus === 'rejected') {
+          const matchingApprovedTaskIds = new Set(matchingApprovedTasks.map((task) => task.id));
           setApprovedCustomTasks((current) =>
-            current.map((t) => (t.id === existingApprovedTask.id ? { ...t, is_deleted: true } : t))
+            current.map((task) => (proposalMatchesApprovedTask(task) ? { ...task, is_deleted: true } : task))
+          );
+          setTaskLogs((current) =>
+            current.filter(
+              (log) =>
+                !proposalMatchesCustomLog(log) &&
+                (!log.approved_custom_task_id || !matchingApprovedTaskIds.has(log.approved_custom_task_id)),
+            )
           );
         }
 
@@ -548,10 +588,8 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         const employeeUser = users.find((u) => u.id === proposal.employee_id);
         if (employeeUser) {
           const notifMessage = finalStatus === 'approved'
-            ? `✅ Your custom task proposal "${proposal.task_name}" has been approved and added to your dashboard.`
-            : finalStatus === 'pending_manager'
-            ? `📋 Your custom task proposal "${proposal.task_name}" has been approved by your Team Lead and is awaiting Manager review.`
-            : `❌ Your custom task proposal "${proposal.task_name}" was rejected. ${reviewNote ? `Note: ${reviewNote}` : ''}`;
+            ? `Your custom task proposal "${proposal.task_name}" has been approved and added to your time.`
+            : `Your custom task proposal "${proposal.task_name}" was rejected. ${reviewNote ? `Note: ${reviewNote}` : ''}`;
           setNotifications((current) => [
             {
               id: id('note'),
@@ -586,26 +624,9 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
                   0,
                 ],
               });
+            }
 
-              // Auto-log the task for the employee so their stats update immediately
-              const taskEffectiveId = task.id;
-              const autoLog: TaskLog = {
-                id: id('log'),
-                employee_id: task.employee_id,
-                task_library_id: null,
-                approved_custom_task_id: taskEffectiveId,
-                task_name: task.task_name,
-                category: task.category,
-                platform_tag: 'Custom',
-                task_time_snapshot: task.time_minutes,
-                status: 'done',
-                notes: `Auto-logged on approval by ${actor.name}`,
-                proof_url: null,
-                project_tag: null,
-                logged_at: new Date().toISOString(),
-                is_custom: true,
-              };
-              setTaskLogs((current) => [autoLog, ...current]);
+            if (autoLog && autoLog.approved_custom_task_id) {
               await turso.execute({
                 sql: `INSERT INTO task_logs (
                   id, employee_id, task_library_id, approved_custom_task_id, task_name, category, platform_tag,
@@ -615,7 +636,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
                   autoLog.id,
                   autoLog.employee_id,
                   null,
-                  taskEffectiveId,
+                  autoLog.approved_custom_task_id,
                   autoLog.task_name,
                   autoLog.category,
                   autoLog.platform_tag ?? null,
@@ -630,12 +651,35 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
               });
             }
 
-            // If rejected and had an approved task, soft-delete it in DB
-            if (finalStatus === 'rejected' && existingApprovedTask) {
-              await turso.execute({
-                sql: 'UPDATE approved_custom_tasks SET is_deleted = 1 WHERE id = ?',
-                args: [existingApprovedTask.id],
+            // Always query persisted tasks on rejection. The reviewer may have stale local state.
+            if (finalStatus === 'rejected') {
+              const matchingTasksRes = await turso.execute({
+                sql: `
+                  SELECT id
+                  FROM approved_custom_tasks
+                  WHERE employee_id = ? AND task_name = ? AND category = ?
+                `,
+                args: [proposal.employee_id, proposal.task_name, proposal.category],
               });
+              const matchingTaskIds = matchingTasksRes.rows.map((row) => String(row.id));
+              await turso.execute({
+                sql: 'DELETE FROM task_logs WHERE employee_id = ? AND task_name = ? AND category = ? AND is_custom = 1',
+                args: [proposal.employee_id, proposal.task_name, proposal.category],
+              });
+              await turso.execute({
+                sql: 'UPDATE approved_custom_tasks SET is_deleted = 1 WHERE employee_id = ? AND task_name = ? AND category = ?',
+                args: [proposal.employee_id, proposal.task_name, proposal.category],
+              });
+              for (const taskId of matchingTaskIds) {
+                await turso.execute({
+                  sql: 'DELETE FROM task_logs WHERE approved_custom_task_id = ?',
+                  args: [taskId],
+                });
+                await turso.execute({
+                  sql: 'UPDATE approved_custom_tasks SET is_deleted = 1 WHERE id = ?',
+                  args: [taskId],
+                });
+              }
             }
           } catch (err) {
             console.error('Failed to update review status in Turso:', err);

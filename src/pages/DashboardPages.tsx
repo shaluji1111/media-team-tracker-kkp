@@ -284,7 +284,7 @@ function SuperAdminDashboard() {
 
 export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
-  const { taskLibrary, approvedCustomTasks, logTask, taskLogs } = useWorkTrackData();
+  const { taskLibrary, logTask, taskLogs } = useWorkTrackData();
   const [taskId, setTaskId] = useState(`library:${taskLibrary.find((task) => !task.is_deleted)?.id ?? ''}`);
   const [status, setStatus] = useState<TaskStatus>('done');
   const [notes, setNotes] = useState('');
@@ -301,12 +301,6 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
       .map((log) => log.task_library_id)
   );
 
-  const loggedCustomIds = new Set(
-    taskLogs
-      .filter((log) => log.employee_id === user?.id && log.logged_at.startsWith(today) && log.approved_custom_task_id)
-      .map((log) => log.approved_custom_task_id)
-  );
-
   const taskOptions = [
     ...taskLibrary
       .filter((task) => !task.is_deleted && !loggedLibraryIds.has(task.id))
@@ -315,15 +309,6 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
         label: task.name,
         category: task.category,
         platform: task.platform_tag ?? 'General',
-        time: task.time_minutes,
-      })),
-    ...approvedCustomTasks
-      .filter((task) => task.employee_id === user?.id && !task.is_deleted && !loggedCustomIds.has(task.id))
-      .map((task) => ({
-        id: `custom:${task.id}`,
-        label: task.task_name,
-        category: task.category,
-        platform: 'Private custom',
         time: task.time_minutes,
       })),
   ];
@@ -419,8 +404,7 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
 
 function ApprovedCustomTasksList() {
   const { user } = useAuth();
-  const { approvedCustomTasks, taskLogs, logTask } = useWorkTrackData();
-  const [error, setError] = useState('');
+  const { approvedCustomTasks, taskLogs } = useWorkTrackData();
   const today = todayInBusinessTz();
 
   if (!user) return null;
@@ -436,7 +420,6 @@ function ApprovedCustomTasksList() {
   return (
     <div className="grid gap-2">
       {myApprovedTasks.map((task) => {
-        // A task might be logged multiple times, but let's just show how many times they logged it today
         const loggedToday = taskLogs.filter(
           (log) => log.employee_id === user.id && log.approved_custom_task_id === task.id && log.logged_at.startsWith(today),
         ).length;
@@ -448,31 +431,14 @@ function ApprovedCustomTasksList() {
                 <p className="font-semibold text-emerald-100">{task.task_name}</p>
                 <ProductivityBadge status="on_track" />
               </div>
-              <p className="mt-1 text-sm text-zinc-400">{task.category} · {task.time_minutes} minutes per log</p>
+              <p className="mt-1 text-sm text-zinc-400">{task.category} · {task.time_minutes} minutes</p>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <span className="text-xs text-zinc-500">Logged {loggedToday} time{loggedToday !== 1 ? 's' : ''} today</span>
-              <Button 
-                className={`px-3 py-1.5 text-xs min-h-0 ${loggedToday >= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={loggedToday >= 1}
-                onClick={() => {
-                  setError('');
-                  void logTask({
-                    employeeId: user.id,
-                    taskId: `custom:${task.id}`,
-                    status: 'done',
-                  }).catch((caught) => {
-                    setError(caught instanceof Error ? caught.message : 'Could not log custom task.');
-                  });
-                }}
-              >
-                <CheckCircle2 size={16} /> {loggedToday >= 1 ? 'Already logged' : 'Log now'}
-              </Button>
+              <span className="text-xs text-zinc-500">{loggedToday >= 1 ? 'Added to today\'s time' : 'Approved'}</span>
             </div>
           </div>
         );
       })}
-      {error ? <p className="rounded-xl bg-red-500/12 p-3 text-sm text-red-200">{error}</p> : null}
     </div>
   );
 }
