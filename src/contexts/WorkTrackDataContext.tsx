@@ -19,7 +19,7 @@ import {
 import { CATEGORIES } from '../lib/constants';
 import { todayInBusinessTz } from '../lib/dates';
 import { isValidJsid, makeDefaultPassword, normalizeJsid } from '../lib/jsid';
-import { turso } from '../lib/turso';
+import { isTursoConfigured, turso } from '../lib/turso';
 import type {
   AppUser,
   ApprovedCustomTask,
@@ -64,10 +64,10 @@ interface WorkTrackDataValue {
   visibleUsersFor: (viewer: AppUser) => AppUser[];
   teamMetricsForUser: (viewer: AppUser) => TeamMetric[];
   reportRowsForUser: (viewer: AppUser) => ReportRow[];
-  logTask: (payload: LogTaskPayload) => void;
-  proposeTask: (employee: AppUser, payload: { taskName: string; description: string; category: string; proposedTime: number }) => void;
+  logTask: (payload: LogTaskPayload) => Promise<void>;
+  proposeTask: (employee: AppUser, payload: { taskName: string; description: string; category: string; proposedTime: number }) => Promise<void>;
   applyLeave: (employee: AppUser, payload: { startDate: string; endDate: string; leaveType: LeaveRequest['leave_type']; reason: string }) => void;
-  reviewProposal: (actor: AppUser, proposalId: string, approve: boolean, note?: string) => void;
+  reviewProposal: (actor: AppUser, proposalId: string, approve: boolean, note?: string) => Promise<void>;
   reviewLeave: (actor: AppUser, leaveId: string, approve: boolean, note?: string) => void;
   markNotificationRead: (id: string) => void;
   sendBroadcast: (actor: AppUser, message: string, target: 'all' | 'employee' | 'team_lead' | 'manager' | 'super_admin') => number;
@@ -87,7 +87,7 @@ interface WorkTrackDataValue {
   taskAssignments: TaskAssignment[];
   addDailyTemplate: (actor: AppUser, payload: { taskLibraryId: string; taskName: string; category: string; platformTag: string | null; timeMinutes: number; assignedTo: string; assignedName: string }) => void;
   removeDailyTemplate: (actor: AppUser, templateId: string) => void;
-  markDailyCompletion: (employee: AppUser, templateId: string, date: string, isDone: boolean) => void;
+  markDailyCompletion: (employee: AppUser, templateId: string, date: string, isDone: boolean) => Promise<void>;
   assignTask: (actor: AppUser, payload: { taskLibraryId: string; taskName: string; employeeId: string; employeeName: string; dueDate: string; notes: string }) => void;
 }
 
@@ -103,6 +103,32 @@ function nextJsid(users: AppUser[]): string {
     return Number.isFinite(number) ? Math.max(highest, number) : highest;
   }, 0);
   return `JS${String(max + 1).padStart(4, '0')}`;
+}
+
+type DbRow = Record<string, unknown>;
+
+function nullableString(value: unknown): string | null {
+  return value === null || value === undefined ? null : String(value);
+}
+
+function dbBoolean(value: unknown): boolean {
+  return value === true || value === 1 || value === '1' || value === 'true';
+}
+
+function mapUser(row: DbRow): AppUser {
+  return {
+    id: String(row.id),
+    jsid: String(row.jsid),
+    auth_email: nullableString(row.auth_email) ?? undefined,
+    name: String(row.name),
+    role: String(row.role) as AppUser['role'],
+    department: String(row.department),
+    manager_id: nullableString(row.manager_id),
+    team_lead_id: nullableString(row.team_lead_id),
+    status: String(row.status) as AppUser['status'],
+    created_at: String(row.created_at),
+    first_login_done: dbBoolean(row.first_login_done),
+  };
 }
 
 export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
@@ -122,12 +148,69 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function loadFromTurso() {
+      if (!isTursoConfigured || !turso) {
+        return;
+      }
       try {
-        const [proposalsRes, approvedRes] = await Promise.all([
+        const [
+          usersRes,
+          taskLibraryRes,
+          taskLogsRes,
+          proposalsRes,
+          approvedRes,
+          dailyTemplatesRes,
+          dailyCompletionsRes,
+          taskAssignmentsRes,
+          auditEventsRes,
+        ] = await Promise.all([
+          turso.execute('SELECT * FROM users ORDER BY created_at ASC'),
+          turso.execute('SELECT * FROM task_library ORDER BY updated_at DESC'),
+          turso.execute('SELECT * FROM task_logs ORDER BY logged_at DESC'),
           turso.execute('SELECT * FROM custom_task_proposals ORDER BY created_at DESC'),
-          turso.execute('SELECT * FROM approved_custom_tasks ORDER BY approved_at DESC')
+          turso.execute('SELECT * FROM approved_custom_tasks ORDER BY approved_at DESC'),
+          turso.execute('SELECT * FROM daily_templates ORDER BY created_at DESC'),
+          turso.execute('SELECT * FROM daily_completions ORDER BY completed_at DESC'),
+          turso.execute('SELECT * FROM task_assignments ORDER BY assigned_at DESC'),
+          turso.execute('SELECT * FROM audit_events ORDER BY created_at DESC'),
         ]);
-        
+
+        const usersRows = usersRes.rows.map((row) => mapUser(row as DbRow));
+        if (usersRows.length > 0) {
+          setUsers(usersRows);
+        }
+
+        const taskLibraryRows = taskLibraryRes.rows.map((row) => ({
+          id: String(row.id),
+          name: String(row.name),
+          category: String(row.category),
+          platform_tag: nullableString(row.platform_tag),
+          time_minutes: Number(row.time_minutes),
+          effective_from_date: String(row.effective_from_date),
+          is_deleted: dbBoolean(row.is_deleted),
+          updated_at: String(row.updated_at),
+        }));
+        if (taskLibraryRows.length > 0) {
+          setTaskLibrary(taskLibraryRows);
+        }
+
+        const taskLogRows = taskLogsRes.rows.map((row) => ({
+          id: String(row.id),
+          employee_id: String(row.employee_id),
+          task_library_id: nullableString(row.task_library_id),
+          approved_custom_task_id: nullableString(row.approved_custom_task_id),
+          task_name: String(row.task_name),
+          category: String(row.category),
+          platform_tag: nullableString(row.platform_tag),
+          task_time_snapshot: Number(row.task_time_snapshot),
+          status: String(row.status) as TaskStatus,
+          notes: nullableString(row.notes),
+          proof_url: nullableString(row.proof_url),
+          project_tag: nullableString(row.project_tag),
+          logged_at: String(row.logged_at),
+          is_custom: dbBoolean(row.is_custom),
+        }));
+        setTaskLogs(taskLogRows);
+
         const proposalsRows = proposalsRes.rows.map(row => ({
           id: String(row.id),
           employee_id: String(row.employee_id),
@@ -149,11 +232,56 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           task_name: String(row.task_name),
           category: String(row.category),
           time_minutes: Number(row.time_minutes),
-          approved_at: String(row.approved_at)
+          approved_at: String(row.approved_at),
+          is_deleted: dbBoolean(row.is_deleted),
         }));
         setApprovedCustomTasks(approvedRows);
+
+        setDailyTemplates(dailyTemplatesRes.rows.map((row) => ({
+          id: String(row.id),
+          task_library_id: String(row.task_library_id),
+          task_name: String(row.task_name),
+          category: String(row.category),
+          platform_tag: nullableString(row.platform_tag),
+          time_minutes: Number(row.time_minutes),
+          assigned_to: String(row.assigned_to),
+          assigned_name: String(row.assigned_name),
+          created_at: String(row.created_at),
+          is_active: dbBoolean(row.is_active),
+        })));
+
+        setDailyCompletions(dailyCompletionsRes.rows.map((row) => ({
+          id: String(row.id),
+          template_id: String(row.template_id),
+          employee_id: String(row.employee_id),
+          date: String(row.date),
+          is_done: dbBoolean(row.is_done),
+          completed_at: nullableString(row.completed_at),
+        })));
+
+        setTaskAssignments(taskAssignmentsRes.rows.map((row) => ({
+          id: String(row.id),
+          task_library_id: String(row.task_library_id),
+          task_name: String(row.task_name),
+          employee_id: String(row.employee_id),
+          employee_name: String(row.employee_name),
+          due_date: nullableString(row.due_date) ?? '',
+          notes: nullableString(row.notes) ?? '',
+          assigned_at: String(row.assigned_at),
+        })));
+
+        setAuditEvents(auditEventsRes.rows.map((row) => ({
+          id: String(row.id),
+          actor_id: nullableString(row.actor_id),
+          actor_name: String(row.actor_name),
+          target_id: nullableString(row.target_id),
+          target_name: String(row.target_name),
+          action: String(row.action) as AuditAction,
+          metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) as Record<string, unknown> : {},
+          created_at: String(row.created_at),
+        })));
       } catch (err) {
-        console.error('Failed to load custom tasks data from Turso:', err);
+        console.error('Failed to load WorkTrack data from Turso:', err);
       }
     }
     loadFromTurso();
@@ -210,7 +338,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
       visibleUsersFor: (viewer) => getVisibleUsers(viewer, users),
       teamMetricsForUser: (viewer) => teamMetricsFor(viewer, users, taskLogs),
       reportRowsForUser: (viewer) => reportRowsFor(viewer, users, taskLogs),
-      logTask: (payload) => {
+      logTask: async (payload) => {
         const [source, sourceId] = payload.taskId.includes(':') ? payload.taskId.split(':') : ['library', payload.taskId];
         const selected = source === 'custom'
           ? approvedCustomTasks.find((task) => task.id === sourceId && task.employee_id === payload.employeeId)
@@ -235,6 +363,30 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           is_custom: source === 'custom',
         };
         setTaskLogs((current) => [log, ...current]);
+        if (isTursoConfigured && turso) {
+          await turso.execute({
+            sql: `INSERT INTO task_logs (
+              id, employee_id, task_library_id, approved_custom_task_id, task_name, category, platform_tag,
+              task_time_snapshot, status, notes, proof_url, project_tag, logged_at, is_custom
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+              log.id,
+              log.employee_id,
+              log.task_library_id ?? null,
+              log.approved_custom_task_id ?? null,
+              log.task_name,
+              log.category,
+              log.platform_tag ?? null,
+              log.task_time_snapshot,
+              log.status,
+              log.notes,
+              log.proof_url,
+              log.project_tag,
+              log.logged_at,
+              log.is_custom ? 1 : 0,
+            ],
+          });
+        }
       },
       proposeTask: async (employee, payload) => {
         const proposal: CustomTaskProposal = {
@@ -254,9 +406,9 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         // Optimistically update UI
         setProposals((current) => [proposal, ...current]);
 
-        // Save to Turso
-        try {
-          await turso.execute({
+        if (isTursoConfigured && turso) {
+          try {
+            await turso.execute({
             sql: `INSERT INTO custom_task_proposals (id, employee_id, employee_name, task_name, description, category, proposed_time, status, created_at) 
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             args: [
@@ -270,9 +422,12 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
               proposal.status,
               proposal.created_at
             ]
-          });
-        } catch (err) {
-          console.error('Failed to save custom task proposal to Turso:', err);
+            });
+          } catch (err) {
+            setProposals((current) => current.filter((item) => item.id !== proposal.id));
+            console.error('Failed to save custom task proposal to Turso:', err);
+            throw err;
+          }
         }
       },
       applyLeave: (employee, payload) => {
@@ -301,8 +456,15 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
             : 'approved'
           : 'rejected';
           
+        const existingApprovedTask = approvedCustomTasks.find(
+          (task) =>
+            task.employee_id === proposal.employee_id &&
+            task.task_name === proposal.task_name &&
+            task.category === proposal.category &&
+            !task.is_deleted,
+        );
         let customTaskDetails: ApprovedCustomTask | null = null;
-        if (finalStatus === 'approved') {
+        if (finalStatus === 'approved' && !existingApprovedTask) {
           customTaskDetails = {
             id: id('custom'),
             employee_id: proposal.employee_id,
@@ -310,6 +472,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
             category: proposal.category,
             time_minutes: proposal.proposed_time,
             approved_at: new Date().toISOString(),
+            is_deleted: false,
           };
           setApprovedCustomTasks((customTasks) => [customTaskDetails as ApprovedCustomTask, ...customTasks]);
         }
@@ -324,30 +487,32 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         );
         addAudit(actor, 'proposal_reviewed', proposalId, { approve, note });
 
-        // Save to Turso
-        try {
-          await turso.execute({
+        if (isTursoConfigured && turso) {
+          try {
+            await turso.execute({
             sql: 'UPDATE custom_task_proposals SET status = ?, reviewed_by = ?, review_note = ? WHERE id = ?',
             args: [finalStatus, actor.id, reviewNote, proposalId]
-          });
-
-          // If approved, also insert into approved_custom_tasks in Turso
-          if (finalStatus === 'approved' && customTaskDetails) {
-            const task = customTaskDetails as ApprovedCustomTask;
-            await turso.execute({
-              sql: 'INSERT INTO approved_custom_tasks (id, employee_id, task_name, category, time_minutes, approved_at) VALUES (?, ?, ?, ?, ?, ?)',
-              args: [
-                task.id,
-                task.employee_id,
-                task.task_name,
-                task.category,
-                task.time_minutes,
-                task.approved_at
-              ]
             });
+
+            if (finalStatus === 'approved' && customTaskDetails) {
+              const task = customTaskDetails as ApprovedCustomTask;
+              await turso.execute({
+                sql: 'INSERT INTO approved_custom_tasks (id, employee_id, task_name, category, time_minutes, approved_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                args: [
+                  task.id,
+                  task.employee_id,
+                  task.task_name,
+                  task.category,
+                  task.time_minutes,
+                  task.approved_at,
+                  0,
+                ],
+              });
+            }
+          } catch (err) {
+            console.error('Failed to update review status in Turso:', err);
+            throw err;
           }
-        } catch (err) {
-          console.error('Failed to update review status in Turso:', err);
         }
       },
       reviewLeave: (actor, leaveId, approve, note) => {
@@ -386,33 +551,54 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         return recipients.length;
       },
       addLibraryTask: (actor, payload) => {
+        const task: TaskLibraryItem = {
+          id: id('task'),
+          name: payload.name,
+          category: payload.category,
+          platform_tag: payload.platformTag || null,
+          time_minutes: payload.timeMinutes,
+          effective_from_date: todayInBusinessTz(),
+          is_deleted: false,
+          updated_at: new Date().toISOString(),
+        };
         setTaskLibrary((current) => [
-          {
-            id: id('task'),
-            name: payload.name,
-            category: payload.category,
-            platform_tag: payload.platformTag || null,
-            time_minutes: payload.timeMinutes,
-            effective_from_date: todayInBusinessTz(),
-            is_deleted: false,
-            updated_at: new Date().toISOString(),
-          },
+          task,
           ...current,
         ]);
+        if (isTursoConfigured && turso) {
+          void turso.execute({
+            sql: 'INSERT INTO task_library (id, name, category, platform_tag, time_minutes, effective_from_date, is_deleted, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            args: [task.id, task.name, task.category, task.platform_tag, task.time_minutes, task.effective_from_date, 0, task.updated_at],
+          }).catch((err) => console.error('Failed to save task library item to Turso:', err));
+        }
         addAudit(actor, 'task_library_changed', payload.name, { type: 'created' });
       },
       updateLibraryTask: (actor, taskId, timeMinutes) => {
+        const updatedAt = new Date().toISOString();
+        const effectiveFromDate = todayInBusinessTz();
         setTaskLibrary((current) =>
           current.map((task) =>
             task.id === taskId
-              ? { ...task, time_minutes: timeMinutes, effective_from_date: todayInBusinessTz(), updated_at: new Date().toISOString() }
+              ? { ...task, time_minutes: timeMinutes, effective_from_date: effectiveFromDate, updated_at: updatedAt }
               : task,
           ),
         );
+        if (isTursoConfigured && turso) {
+          void turso.execute({
+            sql: 'UPDATE task_library SET time_minutes = ?, effective_from_date = ?, updated_at = ? WHERE id = ?',
+            args: [timeMinutes, effectiveFromDate, updatedAt, taskId],
+          }).catch((err) => console.error('Failed to update task library item in Turso:', err));
+        }
         addAudit(actor, 'task_library_changed', taskId, { type: 'time_updated', timeMinutes });
       },
       softDeleteTask: (actor, taskId) => {
         setTaskLibrary((current) => current.map((task) => (task.id === taskId ? { ...task, is_deleted: true } : task)));
+        if (isTursoConfigured && turso) {
+          void turso.execute({
+            sql: 'UPDATE task_library SET is_deleted = ?, updated_at = ? WHERE id = ?',
+            args: [1, new Date().toISOString(), taskId],
+          }).catch((err) => console.error('Failed to delete task library item in Turso:', err));
+        }
         addAudit(actor, 'task_library_changed', taskId, { type: 'soft_deleted' });
       },
       createUser: (actor, payload) => {
@@ -610,73 +796,170 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           is_active: true,
         };
         setDailyTemplates((current) => [template, ...current]);
+        if (isTursoConfigured && turso) {
+          void turso.execute({
+            sql: 'INSERT INTO daily_templates (id, task_library_id, task_name, category, platform_tag, time_minutes, assigned_to, assigned_name, created_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            args: [
+              template.id,
+              template.task_library_id,
+              template.task_name,
+              template.category,
+              template.platform_tag,
+              template.time_minutes,
+              template.assigned_to,
+              template.assigned_name,
+              template.created_at,
+              1,
+            ],
+          }).catch((err) => console.error('Failed to save daily template to Turso:', err));
+        }
         addAudit(actor, 'task_library_changed', payload.taskName, { type: 'daily_template_created', assigned_to: payload.assignedTo });
       },
       removeDailyTemplate: (actor, templateId) => {
         setDailyTemplates((current) => current.map((t) => t.id === templateId ? { ...t, is_active: false } : t));
+        if (isTursoConfigured && turso) {
+          void turso.execute({
+            sql: 'UPDATE daily_templates SET is_active = ? WHERE id = ?',
+            args: [0, templateId],
+          }).catch((err) => console.error('Failed to remove daily template in Turso:', err));
+        }
         addAudit(actor, 'task_library_changed', templateId, { type: 'daily_template_removed' });
       },
-      markDailyCompletion: (employee, templateId, date, isDone) => {
+      markDailyCompletion: async (employee, templateId, date, isDone) => {
         const template = dailyTemplates.find((t) => t.id === templateId);
         if (!template) return;
         const existing = dailyCompletions.find(
           (c) => c.template_id === templateId && c.employee_id === employee.id && c.date === date,
         );
+        const completedAt = isDone ? new Date().toISOString() : null;
         if (existing) {
           setDailyCompletions((current) =>
             current.map((c) =>
               c.id === existing.id
-                ? { ...c, is_done: isDone, completed_at: isDone ? new Date().toISOString() : null }
+                ? { ...c, is_done: isDone, completed_at: completedAt }
                 : c,
             ),
           );
+          if (isTursoConfigured && turso) {
+            await turso.execute({
+              sql: 'UPDATE daily_completions SET is_done = ?, completed_at = ? WHERE id = ?',
+              args: [isDone ? 1 : 0, completedAt, existing.id],
+            });
+          }
         } else {
+          const completion: DailyCompletion = {
+            id: id('daily-done'),
+            template_id: templateId,
+            employee_id: employee.id,
+            date,
+            is_done: isDone,
+            completed_at: completedAt,
+          };
           setDailyCompletions((current) => [
-            { id: id('daily-done'), template_id: templateId, employee_id: employee.id, date, is_done: isDone, completed_at: isDone ? new Date().toISOString() : null },
+            completion,
             ...current,
           ]);
+          if (isTursoConfigured && turso) {
+            await turso.execute({
+              sql: 'INSERT INTO daily_completions (id, template_id, employee_id, date, is_done, completed_at) VALUES (?, ?, ?, ?, ?, ?)',
+              args: [completion.id, completion.template_id, completion.employee_id, completion.date, completion.is_done ? 1 : 0, completion.completed_at],
+            });
+          }
         }
         if (isDone) {
           const alreadyLogged = taskLogs.some(
             (log) => log.employee_id === employee.id && log.task_library_id === template.task_library_id && log.logged_at.startsWith(date),
           );
           if (!alreadyLogged) {
+            const log: TaskLog = {
+              id: id('log'),
+              employee_id: employee.id,
+              task_library_id: template.task_library_id,
+              approved_custom_task_id: null,
+              task_name: template.task_name,
+              category: template.category,
+              platform_tag: template.platform_tag,
+              task_time_snapshot: template.time_minutes,
+              status: 'done',
+              notes: 'Daily task',
+              proof_url: null,
+              project_tag: null,
+              logged_at: new Date().toISOString(),
+              is_custom: false,
+            };
             setTaskLogs((current) => [
-              {
-                id: id('log'),
-                employee_id: employee.id,
-                task_library_id: template.task_library_id,
-                approved_custom_task_id: null,
-                task_name: template.task_name,
-                category: template.category,
-                platform_tag: template.platform_tag,
-                task_time_snapshot: template.time_minutes,
-                status: 'done' as const,
-                notes: 'Daily task',
-                proof_url: null,
-                project_tag: null,
-                logged_at: new Date().toISOString(),
-                is_custom: false,
-              },
+              log,
               ...current,
             ]);
+            if (isTursoConfigured && turso) {
+              await turso.execute({
+                sql: `INSERT INTO task_logs (
+                  id, employee_id, task_library_id, approved_custom_task_id, task_name, category, platform_tag,
+                  task_time_snapshot, status, notes, proof_url, project_tag, logged_at, is_custom
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [
+                  log.id,
+                  log.employee_id,
+                  log.task_library_id ?? null,
+                  log.approved_custom_task_id ?? null,
+                  log.task_name,
+                  log.category,
+                  log.platform_tag ?? null,
+                  log.task_time_snapshot,
+                  log.status,
+                  log.notes,
+                  log.proof_url,
+                  log.project_tag,
+                  log.logged_at,
+                  0,
+                ],
+              });
+            }
+          }
+        } else {
+          const autoLog = taskLogs.find(
+            (log) =>
+              log.employee_id === employee.id &&
+              log.task_library_id === template.task_library_id &&
+              log.logged_at.startsWith(date) &&
+              log.notes === 'Daily task',
+          );
+          setTaskLogs((current) => current.filter((log) => log.id !== autoLog?.id));
+          if (autoLog && isTursoConfigured && turso) {
+            await turso.execute({ sql: 'DELETE FROM task_logs WHERE id = ?', args: [autoLog.id] });
           }
         }
       },
       assignTask: (actor, payload) => {
+        const assignment: TaskAssignment = {
+          id: id('assign'),
+          task_library_id: payload.taskLibraryId,
+          task_name: payload.taskName,
+          employee_id: payload.employeeId,
+          employee_name: payload.employeeName,
+          due_date: payload.dueDate,
+          notes: payload.notes,
+          assigned_at: new Date().toISOString(),
+        };
         setTaskAssignments((current) => [
-          {
-            id: id('assign'),
-            task_library_id: payload.taskLibraryId,
-            task_name: payload.taskName,
-            employee_id: payload.employeeId,
-            employee_name: payload.employeeName,
-            due_date: payload.dueDate,
-            notes: payload.notes,
-            assigned_at: new Date().toISOString(),
-          },
+          assignment,
           ...current,
         ]);
+        if (isTursoConfigured && turso) {
+          void turso.execute({
+            sql: 'INSERT INTO task_assignments (id, task_library_id, task_name, employee_id, employee_name, due_date, notes, assigned_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            args: [
+              assignment.id,
+              assignment.task_library_id,
+              assignment.task_name,
+              assignment.employee_id,
+              assignment.employee_name,
+              assignment.due_date,
+              assignment.notes,
+              assignment.assigned_at,
+            ],
+          }).catch((err) => console.error('Failed to save task assignment to Turso:', err));
+        }
         addAudit(actor, 'task_library_changed', payload.taskName, { type: 'task_assigned', assigned_to: payload.employeeId });
       },
     }),

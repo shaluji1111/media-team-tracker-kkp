@@ -18,4 +18,3 @@ export function makeDefaultPassword(): string {
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
 }
 
-

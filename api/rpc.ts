@@ -20,6 +20,7 @@ export default async function handler(req: Request) {
 
   try {
     const { action, payload } = await req.json();
+    void payload;
 
     switch (action) {
       case 'sync': {
@@ -57,11 +58,8 @@ export default async function handler(req: Request) {
       }
 
       case 'execute': {
-        // Generic execute for single queries (for simplicity in this prototype)
-        // Production apps should NOT let client send raw SQL. We are using this strictly for the prototype transition.
-        const { sql, args } = payload;
-        const result = await client.execute({ sql, args: args || [] });
-        return new Response(JSON.stringify({ success: true, result }), {
+        return new Response(JSON.stringify({ error: 'Raw SQL execution is disabled.' }), {
+          status: 403,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         });
       }

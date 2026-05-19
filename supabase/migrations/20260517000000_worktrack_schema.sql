@@ -42,7 +42,7 @@ exception when duplicate_object then null; end $$;
 
 create table if not exists public.users (
   id uuid primary key references auth.users(id) on delete restrict,
-  jsid text not null unique check (jsid ~ '^JS-[0-9]{4}$'),
+  jsid text not null unique check (jsid ~ '^JS[0-9]{4,5}$'),
   auth_email text not null unique,
   name text not null,
   role public.app_role not null,
@@ -375,8 +375,8 @@ as $$
 declare
   next_number integer;
 begin
-  select coalesce(max(substring(jsid from 4)::integer), 0) + 1 into next_number from public.users;
-  return 'JS-' || lpad(next_number::text, 4, '0');
+  select coalesce(max(substring(jsid from 3)::integer), 0) + 1 into next_number from public.users;
+  return 'JS' || lpad(next_number::text, 4, '0');
 end;
 $$;
 

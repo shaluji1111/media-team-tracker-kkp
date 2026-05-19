@@ -8,7 +8,7 @@ import { Button, Card, Field, Input, Modal, SectionHeader, Select, Textarea } fr
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkTrackData } from '../contexts/WorkTrackDataContext';
 import { MIN_PRODUCTIVE_HOURS } from '../lib/constants';
-import { formatDateTime, todayInBusinessTz, withinHours } from '../lib/dates';
+import { businessWeekStart, formatDateTime, todayInBusinessTz, withinHours } from '../lib/dates';
 import { formatHoursFromMinutes, formatScore } from '../lib/score';
 import type { TaskLog, TaskStatus, TeamMetric } from '../types';
 
@@ -31,15 +31,20 @@ export function DashboardPage() {
 
 function EmployeeDashboard() {
   const { user } = useAuth();
-  const { taskLogs, dailyTemplates, dailyCompletions, markDailyCompletion } = useWorkTrackData();
+  const { taskLogs, dailyTemplates, dailyCompletions, taskAssignments, markDailyCompletion } = useWorkTrackData();
   const navigate = useNavigate();
   const [logOpen, setLogOpen] = useState(false);
   const today = todayInBusinessTz();
+  const weekStart = businessWeekStart();
   const logs = taskLogs.filter((log) => log.employee_id === user?.id);
-  const minutesToday = logs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
-  const tasksDone = logs.filter((log) => log.status === 'done').length;
-  const tasksProgress = logs.filter((log) => log.status === 'in_progress').length;
-  const tasksPending = logs.filter((log) => log.status === 'pending').length;
+  const todayLogs = logs.filter((log) => log.logged_at.startsWith(today));
+  const weekLogs = logs.filter((log) => log.logged_at.slice(0, 10) >= weekStart && log.logged_at.slice(0, 10) <= today);
+  const minutesToday = todayLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
+  const weeklyMinutes = weekLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
+  const tasksDone = todayLogs.filter((log) => log.status === 'done').length;
+  const tasksProgress = todayLogs.filter((log) => log.status === 'in_progress').length;
+  const tasksPending = todayLogs.filter((log) => log.status === 'pending').length;
+  const myAssignments = taskAssignments.filter((assignment) => assignment.employee_id === user?.id);
 
   const myTemplates = dailyTemplates.filter(
     (t) => t.is_active && (t.assigned_to === 'all' || t.assigned_to === user?.id),
@@ -60,8 +65,8 @@ function EmployeeDashboard() {
         </Card>
         <Card>
           <p className="text-sm text-zinc-400">Weekly hours</p>
-          <p className="mt-2 text-4xl font-semibold text-white">{(minutesToday / 60 + 18.5).toFixed(1)}h</p>
-          <p className="mt-3 text-sm text-zinc-500">Cumulative scores can exceed 100% across longer periods.</p>
+          <p className="mt-2 text-4xl font-semibold text-white">{(weeklyMinutes / 60).toFixed(1)}h</p>
+          <p className="mt-3 text-sm text-zinc-500">Calculated from task logs since {weekStart}.</p>
         </Card>
       </div>
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -97,7 +102,11 @@ function EmployeeDashboard() {
               return (
                 <button
                   key={tmpl.id}
-                  onClick={() => user && markDailyCompletion(user, tmpl.id, today, !isDone)}
+                  onClick={() => {
+                    if (user) {
+                      void markDailyCompletion(user, tmpl.id, today, !isDone);
+                    }
+                  }}
                   className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition ${
                     isDone
                       ? 'border-emerald-500/30 bg-emerald-500/10'
@@ -132,12 +141,29 @@ function EmployeeDashboard() {
         <ApprovedCustomTasksList />
       </Card>
 
+      {myAssignments.length > 0 ? (
+        <Card className="mt-5">
+          <h2 className="mb-4 text-lg font-semibold text-white">Assigned Tasks</h2>
+          <div className="grid gap-3">
+            {myAssignments.map((assignment) => (
+              <div key={assignment.id} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <p className="font-semibold text-white">{assignment.task_name}</p>
+                <p className="mt-1 text-sm text-zinc-400">
+                  {assignment.due_date ? `Due ${assignment.due_date}` : 'No due date'}
+                </p>
+                {assignment.notes ? <p className="mt-2 text-sm text-zinc-300">{assignment.notes}</p> : null}
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
       <Card className="mt-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-white">Today's Task Log</h2>
           <Button variant="secondary" onClick={() => navigate('/tasks')}>Open full log</Button>
         </div>
-        <TaskLogTable logs={logs} />
+        <TaskLogTable logs={todayLogs} />
       </Card>
       <LogTaskModal open={logOpen} onClose={() => setLogOpen(false)} />
     </>
@@ -205,7 +231,9 @@ function SuperAdminDashboard() {
   const { teamMetricsForUser, proposals, leaves, taskLogs, users } = useWorkTrackData();
   const metrics = user ? teamMetricsForUser(user) : [];
   const employees = users.filter((candidate) => candidate.role === 'employee');
-  const totalMinutes = taskLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
+  const today = todayInBusinessTz();
+  const todayLogs = taskLogs.filter((log) => log.logged_at.startsWith(today));
+  const totalMinutes = todayLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
   const flagged = metrics.filter((metric) => metric.status === 'flagged').length;
 
   return (
@@ -216,7 +244,7 @@ function SuperAdminDashboard() {
         <StatCard label="Employees flagged" value={flagged} danger />
         <StatCard label="Pending proposals" value={proposals.filter((proposal) => proposal.status !== 'approved' && proposal.status !== 'rejected').length} />
         <StatCard label="Pending leave" value={leaves.filter((leave) => leave.status !== 'approved' && leave.status !== 'rejected').length} />
-        <StatCard label="Tasks logged" value={taskLogs.length} />
+        <StatCard label="Tasks logged" value={todayLogs.length} />
       </div>
       <Card className="mt-5">
         <div className="mb-4 flex items-center justify-between">
@@ -264,6 +292,7 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
   const [proofUrl, setProofUrl] = useState('');
   const [group, setGroup] = useState<'flat' | 'category' | 'platform'>('flat');
   const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
   const today = todayInBusinessTz();
 
   const loggedLibraryIds = new Set(
@@ -301,14 +330,29 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
   const tasks = taskOptions.filter((task) =>
     `${task.label} ${task.category} ${task.platform}`.toLowerCase().includes(search.toLowerCase()),
   );
-  const selected = taskOptions.find((task) => task.id === taskId);
+  const firstAvailableTaskId = taskOptions[0]?.id ?? '';
+  const taskIdStillAvailable = taskOptions.some((task) => task.id === taskId);
+  const selectedTaskId = taskIdStillAvailable ? taskId : firstAvailableTaskId;
+  const selected = taskOptions.find((task) => task.id === selectedTaskId);
+  const groupedTasks =
+    group === 'flat'
+      ? []
+      : Array.from(new Set(tasks.map((task) => (group === 'category' ? task.category : task.platform)))).map((label) => ({
+          label,
+          tasks: tasks.filter((task) => (group === 'category' ? task.category : task.platform) === label),
+        }));
 
-  function submit() {
+  async function submit() {
     if (!user) {
       return;
     }
-    logTask({ employeeId: user.id, taskId, status, notes, projectTag, proofUrl });
-    onClose();
+    setError('');
+    try {
+      await logTask({ employeeId: user.id, taskId: selectedTaskId, status, notes, projectTag, proofUrl });
+      onClose();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not log task.');
+    }
   }
 
   return (
@@ -329,12 +373,22 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
           <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by task, category, platform" />
         </Field>
         <Field label={`Task (${group} view)`}>
-          <Select value={taskId} onChange={(event) => setTaskId(event.target.value)}>
-            {tasks.map((task) => (
-              <option key={task.id} value={task.id}>
-                {task.label} - {task.category} - {task.platform}
-              </option>
-            ))}
+          <Select value={selectedTaskId} onChange={(event) => setTaskId(event.target.value)}>
+            {group === 'flat'
+              ? tasks.map((task) => (
+                  <option key={task.id} value={task.id}>
+                    {task.label} - {task.category} - {task.platform}
+                  </option>
+                ))
+              : groupedTasks.map((section) => (
+                  <optgroup key={section.label} label={section.label}>
+                    {section.tasks.map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.label} - {task.category} - {task.platform}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
           </Select>
         </Field>
         <Field label="Predefined time">
@@ -356,7 +410,8 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
         <Field label="Notes">
           <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional" />
         </Field>
-        <Button onClick={submit}>Submit task</Button>
+        {error ? <p className="rounded-xl bg-red-500/12 p-3 text-sm text-red-200">{error}</p> : null}
+        <Button onClick={() => void submit()} disabled={!selected}>Submit task</Button>
       </div>
     </Modal>
   );
@@ -365,6 +420,7 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
 function ApprovedCustomTasksList() {
   const { user } = useAuth();
   const { approvedCustomTasks, taskLogs, logTask } = useWorkTrackData();
+  const [error, setError] = useState('');
   const today = todayInBusinessTz();
 
   if (!user) return null;
@@ -382,7 +438,7 @@ function ApprovedCustomTasksList() {
       {myApprovedTasks.map((task) => {
         // A task might be logged multiple times, but let's just show how many times they logged it today
         const loggedToday = taskLogs.filter(
-          (log) => log.approved_custom_task_id === task.id && log.logged_at.startsWith(today),
+          (log) => log.employee_id === user.id && log.approved_custom_task_id === task.id && log.logged_at.startsWith(today),
         ).length;
 
         return (
@@ -400,10 +456,13 @@ function ApprovedCustomTasksList() {
                 className={`px-3 py-1.5 text-xs min-h-0 ${loggedToday >= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={loggedToday >= 1}
                 onClick={() => {
-                  logTask({
+                  setError('');
+                  void logTask({
                     employeeId: user.id,
                     taskId: `custom:${task.id}`,
-                    status: 'done'
+                    status: 'done',
+                  }).catch((caught) => {
+                    setError(caught instanceof Error ? caught.message : 'Could not log custom task.');
                   });
                 }}
               >
@@ -413,6 +472,7 @@ function ApprovedCustomTasksList() {
           </div>
         );
       })}
+      {error ? <p className="rounded-xl bg-red-500/12 p-3 text-sm text-red-200">{error}</p> : null}
     </div>
   );
 }
@@ -442,7 +502,7 @@ function TaskLogTable({ logs }: { logs: TaskLog[] }) {
               <td className="text-zinc-300">{formatHoursFromMinutes(log.task_time_snapshot)}</td>
               <td><TaskStatusBadge status={log.status} /></td>
               <td className="text-zinc-400">{formatDateTime(log.logged_at)}</td>
-              <td>{withinHours(log.logged_at, 24) ? <Button variant="ghost">Edit</Button> : <span className="text-zinc-600">Closed</span>}</td>
+              <td>{withinHours(log.logged_at, 24) ? <span className="text-zinc-500">Open</span> : <span className="text-zinc-600">Closed</span>}</td>
             </tr>
           ))}
         </tbody>

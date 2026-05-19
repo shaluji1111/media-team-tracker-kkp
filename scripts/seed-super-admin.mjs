@@ -18,7 +18,7 @@ function password() {
 }
 
 const name = process.env.WORKTRACK_SUPER_ADMIN_NAME || 'Super Admin';
-const jsid = 'JS-0001';
+const jsid = 'JS0001';
 const email = 'js0001@worktrack.local';
 const defaultPassword = process.env.WORKTRACK_SUPER_ADMIN_PASSWORD || password();
 

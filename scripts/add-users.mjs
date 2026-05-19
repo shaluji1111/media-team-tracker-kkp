@@ -2,6 +2,10 @@ import { createClient } from '@libsql/client';
 import dotenv from 'dotenv';
 dotenv.config();
 
+if (!process.env.VITE_TURSO_DATABASE_URL || !process.env.VITE_TURSO_AUTH_TOKEN) {
+  throw new Error('Set VITE_TURSO_DATABASE_URL and VITE_TURSO_AUTH_TOKEN before running this script.');
+}
+
 const client = createClient({
   url: process.env.VITE_TURSO_DATABASE_URL,
   authToken: process.env.VITE_TURSO_AUTH_TOKEN,
@@ -20,6 +24,7 @@ const users = [
   { name: 'Sourav', jsid: 'JS21406', role: 'employee', department: 'Content' },
   { name: 'Aryan', jsid: 'JS20469', role: 'employee', department: 'Content' },
   { name: 'rajat', jsid: 'JS19176', role: 'employee', department: 'Video' },
+  { name: 'Abhiraj', jsid: 'JS21384', role: 'employee', department: 'Video' },
 ];
 
 async function main() {
@@ -29,14 +34,13 @@ async function main() {
 
   // Superuser JS0001
   const suPassword = generatePassword();
-  await client.execute({
-    sql: "UPDATE users SET password_hash = ? WHERE jsid = 'JS0001'",
-    args: [suPassword]
-  });
-  
-  // If Super Admin doesn't exist, we insert:
   const suRes = await client.execute("SELECT * FROM users WHERE jsid = 'JS0001'");
-  if (suRes.rows.length === 0) {
+  if (suRes.rows.length > 0) {
+    await client.execute({
+      sql: "UPDATE users SET password_hash = ?, first_login_done = ? WHERE jsid = 'JS0001'",
+      args: [suPassword, 0],
+    });
+  } else {
     const id = crypto.randomUUID();
     await client.execute({
       sql: `INSERT INTO users (id, jsid, auth_email, name, role, department, status, created_at, first_login_done, password_hash)
@@ -58,8 +62,8 @@ async function main() {
     
     if (existing.rows.length > 0) {
       await client.execute({
-        sql: "UPDATE users SET password_hash = ? WHERE jsid = ?",
-        args: [password, u.jsid.toUpperCase()]
+        sql: "UPDATE users SET password_hash = ?, name = ?, role = ?, department = ?, status = ?, first_login_done = ? WHERE jsid = ?",
+        args: [password, u.name, u.role, u.department, 'active', 0, u.jsid.toUpperCase()]
       });
     } else {
       await client.execute({

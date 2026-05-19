@@ -115,7 +115,8 @@ export function getVisibleUsers(user: AppUser, users = demoUsers): AppUser[] {
 }
 
 export function logsForUser(employeeId: string, logs = demoTaskLogs): TaskLog[] {
-  return logs.filter((log) => log.employee_id === employeeId && log.logged_at.slice(0, 10) === today);
+  const currentBusinessDate = todayInBusinessTz();
+  return logs.filter((log) => log.employee_id === employeeId && log.logged_at.slice(0, 10) === currentBusinessDate);
 }
 
 export function minutesForEmployee(employeeId: string, logs = demoTaskLogs): number | null {

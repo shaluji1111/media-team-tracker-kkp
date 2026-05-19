@@ -13,6 +13,7 @@ import { demoUsers } from '../data/mockData';
 import { SESSION_IDLE_LIMIT_MS } from '../lib/constants';
 import { isValidJsid, jsidToAuthEmail, normalizeJsid } from '../lib/jsid';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { isTursoConfigured } from '../lib/turso';
 import type { AppUser } from '../types';
 
 interface AuthContextValue {
@@ -146,27 +147,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!isSupabaseConfigured || !supabase) {
       try {
-        const { createClient } = await import('@libsql/client/web');
-        const client = createClient({
-          url: import.meta.env.VITE_TURSO_DATABASE_URL,
-          authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN,
-        });
-        const data = await client.execute({
-          sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
-          args: [jsid, password]
-        });
-        if (data.rows && data.rows.length > 0) {
-          const matchedUser = data.rows[0] as unknown as AppUser;
-          if (matchedUser.status !== 'active') {
-            throw new Error('This account is not active.');
+        if (isTursoConfigured) {
+          const { createClient } = await import('@libsql/client/web');
+          const client = createClient({
+            url: import.meta.env.VITE_TURSO_DATABASE_URL,
+            authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN,
+          });
+          const data = await client.execute({
+            sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
+            args: [jsid, password],
+          });
+          if (data.rows && data.rows.length > 0) {
+            const matchedUser = data.rows[0] as unknown as AppUser;
+            if (matchedUser.status !== 'active') {
+              throw new Error('This account is not active.');
+            }
+            const normalizedUser = {
+              ...matchedUser,
+              first_login_done: Boolean(matchedUser.first_login_done),
+              manager_id: matchedUser.manager_id ?? null,
+              team_lead_id: matchedUser.team_lead_id ?? null,
+            };
+            setUser(normalizedUser);
+            if (remember) {
+              localStorage.setItem(DEMO_USER_KEY, JSON.stringify(normalizedUser));
+            } else {
+              sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(normalizedUser));
+            }
+            return;
           }
-          setUser(matchedUser);
-          if (remember) {
-            localStorage.setItem(DEMO_USER_KEY, JSON.stringify(matchedUser));
-          } else {
-            sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(matchedUser));
-          }
-          return;
         }
       } catch (err) {
         console.error('Turso login failed, falling back to demo', err);
@@ -222,6 +231,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const next = { ...user, first_login_done: true };
         setUser(next);
         localStorage.setItem(DEMO_USER_KEY, JSON.stringify(next));
+        if (isTursoConfigured) {
+          const { createClient } = await import('@libsql/client/web');
+          const client = createClient({
+            url: import.meta.env.VITE_TURSO_DATABASE_URL,
+            authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN,
+          });
+          await client.execute({
+            sql: 'UPDATE users SET password_hash = ?, first_login_done = ? WHERE id = ?',
+            args: [password, 1, user.id],
+          });
+        }
         return;
       }
       const { error } = await supabase.auth.updateUser({ password });

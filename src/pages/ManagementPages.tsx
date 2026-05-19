@@ -78,16 +78,26 @@ export function ProposalsPage() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [proposedTime, setProposedTime] = useState(60);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== 'employee') return <Navigate to="/approvals" replace />;
   const mine = proposals.filter((proposal) => proposal.employee_id === user.id);
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    proposeTask(user!, { taskName, description, category, proposedTime });
-    setTaskName('');
-    setDescription('');
-    setProposedTime(60);
+    setError('');
+    setSubmitting(true);
+    try {
+      await proposeTask(user!, { taskName, description, category, proposedTime });
+      setTaskName('');
+      setDescription('');
+      setProposedTime(60);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not submit custom task proposal.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -96,7 +106,7 @@ export function ProposalsPage() {
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
           <h2 className="mb-4 text-lg font-semibold text-white">Propose Custom Task</h2>
-          <form className="grid gap-4" onSubmit={submit}>
+          <form className="grid gap-4" onSubmit={(event) => void submit(event)}>
             <Field label="Task name"><Input value={taskName} onChange={(event) => setTaskName(event.target.value)} required /></Field>
             <Field label="Description"><Textarea value={description} onChange={(event) => setDescription(event.target.value)} required /></Field>
             <Field label="Category">
@@ -107,7 +117,8 @@ export function ProposalsPage() {
             <Field label="Proposed time in minutes">
               <Input type="number" min={15} value={proposedTime} onChange={(event) => setProposedTime(Number(event.target.value))} />
             </Field>
-            <Button>Submit proposal</Button>
+            {error ? <p className="rounded-xl bg-red-500/12 p-3 text-sm text-red-200">{error}</p> : null}
+            <Button disabled={submitting}>{submitting ? 'Submitting...' : 'Submit proposal'}</Button>
           </form>
         </Card>
         <Card>
@@ -212,12 +223,31 @@ export function NotificationsPage() {
 
 export function ApprovalsPage() {
   const { user } = useAuth();
-  const { proposals, leaves, reviewProposal, reviewLeave } = useWorkTrackData();
+  const { proposals, leaves, users, reviewProposal, reviewLeave } = useWorkTrackData();
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'employee') return <Navigate to="/proposals" replace />;
 
-  const pendingProposals = proposals.filter((p) => !['approved', 'rejected'].includes(p.status));
-  const decidedProposals = proposals.filter((p) => ['approved', 'rejected'].includes(p.status));
+  const canReviewProposal = (proposal: CustomTaskProposal) => {
+    if (user.role === 'super_admin') {
+      return true;
+    }
+    const employee = users.find((candidate) => candidate.id === proposal.employee_id);
+    if (!employee) {
+      return false;
+    }
+    if (user.role === 'team_lead') {
+      return employee.team_lead_id === user.id;
+    }
+    if (user.role === 'manager') {
+      const lead = users.find((candidate) => candidate.id === employee.team_lead_id);
+      return lead?.manager_id === user.id;
+    }
+    return false;
+  };
+
+  const visibleProposals = proposals.filter(canReviewProposal);
+  const pendingProposals = visibleProposals.filter((p) => !['approved', 'rejected'].includes(p.status));
+  const decidedProposals = visibleProposals.filter((p) => ['approved', 'rejected'].includes(p.status));
   const pendingLeaves = leaves.filter((l) => !['approved', 'rejected'].includes(l.status));
   const decidedLeaves = leaves.filter((l) => ['approved', 'rejected'].includes(l.status));
 
@@ -563,7 +593,7 @@ function PendingPasswordResetCard({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-semibold text-white">{user?.name ?? request.jsid}</p>
-          <p className="text-sm text-zinc-400">{request.jsid} Â· {formatDateTime(request.created_at)}</p>
+          <p className="text-sm text-zinc-400">{request.jsid} · {formatDateTime(request.created_at)}</p>
         </div>
         <ApprovalBadge status={request.status} />
       </div>
