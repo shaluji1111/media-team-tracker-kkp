@@ -358,8 +358,8 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
       notifications,
       auditEvents,
       visibleUsersFor: (viewer) => getVisibleUsers(viewer, users),
-      teamMetricsForUser: (viewer) => teamMetricsFor(viewer, users, taskLogs),
-      reportRowsForUser: (viewer) => reportRowsFor(viewer, users, taskLogs),
+      teamMetricsForUser: (viewer) => teamMetricsFor(viewer, users, taskLogs, leaves),
+      reportRowsForUser: (viewer) => reportRowsFor(viewer, users, taskLogs, leaves),
       logTask: async (payload) => {
         const [source, sourceId] = payload.taskId.includes(':') ? payload.taskId.split(':') : ['library', payload.taskId];
         const selected = source === 'custom'

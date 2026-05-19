@@ -145,34 +145,47 @@ export function scoreForUser(user: AppUser, users = demoUsers, logs = demoTaskLo
   return averageNullable(leads.map((lead) => scoreForUser(lead, users, logs)));
 }
 
-export function teamMetricsFor(viewer: AppUser, users = demoUsers, logs = demoTaskLogs): TeamMetric[] {
+function hasApprovedLeaveToday(user: AppUser, leaves = demoLeaves): boolean {
+  const currentBusinessDate = todayInBusinessTz();
+  return leaves.some(
+    (leave) =>
+      leave.employee_id === user.id &&
+      leave.status === 'approved' &&
+      leave.start_date <= currentBusinessDate &&
+      leave.end_date >= currentBusinessDate,
+  );
+}
+
+export function teamMetricsFor(viewer: AppUser, users = demoUsers, logs = demoTaskLogs, leaves = demoLeaves): TeamMetric[] {
   return getVisibleUsers(viewer, users)
     .filter((user) => user.role !== 'super_admin')
     .filter((user) => (viewer.role === 'employee' ? user.id === viewer.id : user.id !== viewer.id))
     .map((user) => {
       const minutes = user.role === 'employee' ? minutesForEmployee(user.id, logs) : null;
+      const approvedLeaveToday = user.role === 'employee' && hasApprovedLeaveToday(user, leaves);
       return {
         user,
         hoursToday: minutes === null ? null : minutes / 60,
-        score: scoreForUser(user, users, logs),
+        score: approvedLeaveToday ? null : scoreForUser(user, users, logs),
         tasksToday: user.role === 'employee' ? logsForUser(user.id, logs).length : 0,
-        status: user.role === 'employee' ? statusForMinutes(minutes) : 'no_data',
+        status: user.role === 'employee' ? statusForMinutes(minutes, approvedLeaveToday) : 'no_data',
         childCount: getChildren(user, users).length,
       };
     });
 }
 
-export function reportRowsFor(viewer: AppUser, users = demoUsers, logs = demoTaskLogs): ReportRow[] {
+export function reportRowsFor(viewer: AppUser, users = demoUsers, logs = demoTaskLogs, leaves = demoLeaves): ReportRow[] {
   const visibleEmployees = getVisibleUsers(viewer, users).filter((user) => user.role === 'employee');
   return visibleEmployees.map((employee) => {
     const employeeLogs = logsForUser(employee.id, logs);
     const totalMinutes = employeeLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
+    const approvedLeaveToday = hasApprovedLeaveToday(employee, leaves);
     return {
       employee,
       taskCount: employeeLogs.length,
       totalHours: totalMinutes / 60,
-      score: employeeDailyScore(employeeLogs.length ? totalMinutes : null),
-      status: statusForMinutes(employeeLogs.length ? totalMinutes : null),
+      score: employeeDailyScore(employeeLogs.length ? totalMinutes : null, approvedLeaveToday),
+      status: statusForMinutes(employeeLogs.length ? totalMinutes : null, approvedLeaveToday),
     };
   });
 }
