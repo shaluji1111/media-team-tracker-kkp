@@ -26,7 +26,8 @@ export const demoUsers: AppUser[] = [
   { id: 'u-sakshi', jsid: 'JS21312', auth_email: 'js21312@worktrack.local', name: 'Sakshi', role: 'employee', department: 'Design', manager_id: null, team_lead_id: 'u-abhishek', status: 'active', created_at: new Date().toISOString(), first_login_done: true },
   { id: 'u-sourav', jsid: 'JS21406', auth_email: 'js21406@worktrack.local', name: 'Sourav', role: 'employee', department: 'Content', manager_id: null, team_lead_id: 'u-abhishek', status: 'active', created_at: new Date().toISOString(), first_login_done: true },
   { id: 'u-aryan', jsid: 'JS20469', auth_email: 'js20469@worktrack.local', name: 'Aryan', role: 'employee', department: 'Content', manager_id: null, team_lead_id: 'u-abhishek', status: 'active', created_at: new Date().toISOString(), first_login_done: true },
-  { id: 'u-rajat', jsid: 'JS19176', auth_email: 'js19176@worktrack.local', name: 'rajat', role: 'employee', department: 'Video', manager_id: null, team_lead_id: 'u-abhishek', status: 'active', created_at: new Date().toISOString(), first_login_done: true }
+  { id: 'u-rajat', jsid: 'JS19176', auth_email: 'js19176@worktrack.local', name: 'rajat', role: 'employee', department: 'Video', manager_id: null, team_lead_id: 'u-abhishek', status: 'active', created_at: new Date().toISOString(), first_login_done: true },
+  { id: 'u-abhiraj', jsid: 'JS21384', auth_email: 'js21384@worktrack.local', name: 'Abhiraj', role: 'employee', department: 'Video', manager_id: null, team_lead_id: 'u-abhishek', status: 'active', created_at: new Date().toISOString(), first_login_done: true }
 ];
 
 export const demoTaskLibrary: TaskLibraryItem[] = [
