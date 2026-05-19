@@ -31,6 +31,7 @@ import type {
   LeaveRequest,
   NotificationItem,
   PasswordResetRequest,
+  ProposalStatus,
   ReportRow,
   SelfRegistrationRequest,
   TaskAssignment,
@@ -123,12 +124,27 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
     async function loadFromTurso() {
       try {
         const res = await turso.execute('SELECT * FROM custom_task_proposals ORDER BY created_at DESC');
-        setProposals(res.rows as unknown as CustomTaskProposal[]);
+        const rows = res.rows.map(row => ({
+          id: String(row.id),
+          employee_id: String(row.employee_id),
+          employee_name: String(row.employee_name),
+          task_name: String(row.task_name),
+          description: String(row.description),
+          category: String(row.category),
+          proposed_time: Number(row.proposed_time),
+          status: String(row.status) as ProposalStatus,
+          reviewed_by: row.reviewed_by ? String(row.reviewed_by) : null,
+          review_note: row.review_note ? String(row.review_note) : null,
+          created_at: String(row.created_at)
+        }));
+        setProposals(rows);
       } catch (err) {
         console.error('Failed to load custom task proposals from Turso:', err);
       }
     }
     loadFromTurso();
+    const interval = setInterval(loadFromTurso, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const addAudit = (actor: AppUser, action: AuditAction, targetName: string, metadata: Record<string, unknown> = {}) => {
