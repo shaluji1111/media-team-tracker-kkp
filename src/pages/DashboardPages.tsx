@@ -350,7 +350,7 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
 
 function ApprovedCustomTasksList() {
   const { user } = useAuth();
-  const { approvedCustomTasks, taskLogs } = useWorkTrackData();
+  const { approvedCustomTasks, taskLogs, logTask } = useWorkTrackData();
   const today = todayInBusinessTz();
 
   if (!user) return null;
@@ -380,8 +380,17 @@ function ApprovedCustomTasksList() {
               </div>
               <p className="mt-1 text-sm text-zinc-400">{task.category} · {task.time_minutes} minutes per log</p>
             </div>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-end gap-2">
               <span className="text-xs text-zinc-500">Logged {loggedToday} time{loggedToday !== 1 ? 's' : ''} today</span>
+              <Button className="px-3 py-1.5 text-xs min-h-0" onClick={() => {
+                logTask({
+                  employeeId: user.id,
+                  taskId: `custom:${task.id}`,
+                  status: 'done'
+                });
+              }}>
+                <CheckCircle2 size={16} /> Log now
+              </Button>
             </div>
           </div>
         );
