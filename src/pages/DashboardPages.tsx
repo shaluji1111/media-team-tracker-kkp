@@ -124,6 +124,14 @@ function EmployeeDashboard() {
         </Card>
       )}
 
+      {/* Approved Custom Tasks */}
+      <Card className="mt-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-white">My Approved Custom Tasks</h2>
+        </div>
+        <ApprovedCustomTasksList />
+      </Card>
+
       <Card className="mt-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-white">Today's Task Log</h2>
@@ -337,6 +345,48 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
         <Button onClick={submit}>Submit task</Button>
       </div>
     </Modal>
+  );
+}
+
+function ApprovedCustomTasksList() {
+  const { user } = useAuth();
+  const { approvedCustomTasks, taskLogs } = useWorkTrackData();
+  const today = todayInBusinessTz();
+
+  if (!user) return null;
+
+  const myApprovedTasks = approvedCustomTasks.filter(
+    (t) => t.employee_id === user.id && !t.is_deleted,
+  );
+
+  if (myApprovedTasks.length === 0) {
+    return <p className="text-sm text-zinc-400">You don't have any approved custom tasks yet.</p>;
+  }
+
+  return (
+    <div className="grid gap-2">
+      {myApprovedTasks.map((task) => {
+        // A task might be logged multiple times, but let's just show how many times they logged it today
+        const loggedToday = taskLogs.filter(
+          (log) => log.approved_custom_task_id === task.id && log.logged_at.startsWith(today),
+        ).length;
+
+        return (
+          <div key={task.id} className="flex flex-col gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-emerald-100">{task.task_name}</p>
+                <ProductivityBadge status="on_track" />
+              </div>
+              <p className="mt-1 text-sm text-zinc-400">{task.category} · {task.time_minutes} minutes per log</p>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-xs text-zinc-500">Logged {loggedToday} time{loggedToday !== 1 ? 's' : ''} today</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

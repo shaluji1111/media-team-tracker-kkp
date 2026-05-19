@@ -123,8 +123,12 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function loadFromTurso() {
       try {
-        const res = await turso.execute('SELECT * FROM custom_task_proposals ORDER BY created_at DESC');
-        const rows = res.rows.map(row => ({
+        const [proposalsRes, approvedRes] = await Promise.all([
+          turso.execute('SELECT * FROM custom_task_proposals ORDER BY created_at DESC'),
+          turso.execute('SELECT * FROM approved_custom_tasks ORDER BY approved_at DESC')
+        ]);
+        
+        const proposalsRows = proposalsRes.rows.map(row => ({
           id: String(row.id),
           employee_id: String(row.employee_id),
           employee_name: String(row.employee_name),
@@ -137,9 +141,19 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           review_note: row.review_note ? String(row.review_note) : null,
           created_at: String(row.created_at)
         }));
-        setProposals(rows);
+        setProposals(proposalsRows);
+
+        const approvedRows = approvedRes.rows.map(row => ({
+          id: String(row.id),
+          employee_id: String(row.employee_id),
+          task_name: String(row.task_name),
+          category: String(row.category),
+          time_minutes: Number(row.time_minutes),
+          approved_at: String(row.approved_at)
+        }));
+        setApprovedCustomTasks(approvedRows);
       } catch (err) {
-        console.error('Failed to load custom task proposals from Turso:', err);
+        console.error('Failed to load custom tasks data from Turso:', err);
       }
     }
     loadFromTurso();
