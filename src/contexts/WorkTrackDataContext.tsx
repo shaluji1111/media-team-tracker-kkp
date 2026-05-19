@@ -527,6 +527,13 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           setApprovedCustomTasks((customTasks) => [customTaskDetails as ApprovedCustomTask, ...customTasks]);
         }
 
+        // If rejected and there was a previously approved version, soft-delete it from employee's dashboard
+        if (finalStatus === 'rejected' && existingApprovedTask) {
+          setApprovedCustomTasks((current) =>
+            current.map((t) => (t.id === existingApprovedTask.id ? { ...t, is_deleted: true } : t))
+          );
+        }
+
         const reviewNote = note ?? null;
         
         setProposals((current) =>
@@ -536,6 +543,27 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           })
         );
         addAudit(actor, 'proposal_reviewed', proposalId, { approve, note });
+
+        // Send a notification to the employee about the decision
+        const employeeUser = users.find((u) => u.id === proposal.employee_id);
+        if (employeeUser) {
+          const notifMessage = finalStatus === 'approved'
+            ? `✅ Your custom task proposal "${proposal.task_name}" has been approved and added to your dashboard.`
+            : finalStatus === 'pending_manager'
+            ? `📋 Your custom task proposal "${proposal.task_name}" has been approved by your Team Lead and is awaiting Manager review.`
+            : `❌ Your custom task proposal "${proposal.task_name}" was rejected. ${reviewNote ? `Note: ${reviewNote}` : ''}`;
+          setNotifications((current) => [
+            {
+              id: id('note'),
+              user_id: employeeUser.id,
+              message: notifMessage,
+              type: 'proposal' as const,
+              is_read: false,
+              created_at: new Date().toISOString(),
+            },
+            ...current,
+          ]);
+        }
 
         if (isTursoConfigured && turso) {
           try {
@@ -557,6 +585,56 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
                   task.approved_at,
                   0,
                 ],
+              });
+
+              // Auto-log the task for the employee so their stats update immediately
+              const taskEffectiveId = task.id;
+              const autoLog: TaskLog = {
+                id: id('log'),
+                employee_id: task.employee_id,
+                task_library_id: null,
+                approved_custom_task_id: taskEffectiveId,
+                task_name: task.task_name,
+                category: task.category,
+                platform_tag: 'Custom',
+                task_time_snapshot: task.time_minutes,
+                status: 'done',
+                notes: `Auto-logged on approval by ${actor.name}`,
+                proof_url: null,
+                project_tag: null,
+                logged_at: new Date().toISOString(),
+                is_custom: true,
+              };
+              setTaskLogs((current) => [autoLog, ...current]);
+              await turso.execute({
+                sql: `INSERT INTO task_logs (
+                  id, employee_id, task_library_id, approved_custom_task_id, task_name, category, platform_tag,
+                  task_time_snapshot, status, notes, proof_url, project_tag, logged_at, is_custom
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [
+                  autoLog.id,
+                  autoLog.employee_id,
+                  null,
+                  taskEffectiveId,
+                  autoLog.task_name,
+                  autoLog.category,
+                  autoLog.platform_tag ?? null,
+                  autoLog.task_time_snapshot,
+                  autoLog.status,
+                  autoLog.notes,
+                  null,
+                  null,
+                  autoLog.logged_at,
+                  1,
+                ],
+              });
+            }
+
+            // If rejected and had an approved task, soft-delete it in DB
+            if (finalStatus === 'rejected' && existingApprovedTask) {
+              await turso.execute({
+                sql: 'UPDATE approved_custom_tasks SET is_deleted = 1 WHERE id = ?',
+                args: [existingApprovedTask.id],
               });
             }
           } catch (err) {
