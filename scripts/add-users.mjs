@@ -27,6 +27,36 @@ const users = [
   { name: 'Abhiraj', jsid: 'JS21384', role: 'employee', department: 'Video' },
 ];
 
+const managerJsid = 'JS20741';
+const teamLeadJsid = 'JS21587';
+const employeeJsids = users.filter((user) => user.role === 'employee').map((user) => user.jsid);
+
+async function applyHierarchy() {
+  const manager = await client.execute({ sql: 'SELECT id FROM users WHERE jsid = ?', args: [managerJsid] });
+  const teamLead = await client.execute({ sql: 'SELECT id FROM users WHERE jsid = ?', args: [teamLeadJsid] });
+
+  if (manager.rows.length === 0 || teamLead.rows.length === 0) {
+    throw new Error('Cannot apply hierarchy until manager and team lead users exist.');
+  }
+
+  const managerId = String(manager.rows[0].id);
+  const teamLeadId = String(teamLead.rows[0].id);
+  const placeholders = employeeJsids.map(() => '?').join(', ');
+
+  await client.execute({
+    sql: 'UPDATE users SET manager_id = NULL, team_lead_id = NULL WHERE jsid = ?',
+    args: [managerJsid],
+  });
+  await client.execute({
+    sql: 'UPDATE users SET manager_id = ?, team_lead_id = NULL WHERE jsid = ?',
+    args: [managerId, teamLeadJsid],
+  });
+  await client.execute({
+    sql: `UPDATE users SET manager_id = NULL, team_lead_id = ? WHERE jsid IN (${placeholders})`,
+    args: [teamLeadId, ...employeeJsids],
+  });
+}
+
 async function main() {
   console.log('Generating passwords and inserting users into Turso...');
 
@@ -75,6 +105,8 @@ async function main() {
     
     results.push({ name: u.name, jsid: u.jsid.toUpperCase(), password });
   }
+
+  await applyHierarchy();
 
   console.log('--------------------------------------------------');
   console.log('USER CREDENTIALS (PLEASE SHARE WITH USER):');

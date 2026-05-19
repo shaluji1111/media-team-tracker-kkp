@@ -14,7 +14,8 @@
     "supabase:link": "npx supabase link",
     "supabase:push": "npx supabase db push",
     "supabase:functions:deploy": "npx supabase functions deploy",
-    "seed:super-admin": "node scripts/seed-super-admin.mjs"
+    "seed:super-admin": "node scripts/seed-super-admin.mjs",
+    "repair:hierarchy": "node scripts/repair-hierarchy.mjs"
   },
   "keywords": [],
   "author": "",
