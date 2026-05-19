@@ -131,6 +131,12 @@ function mapUser(row: DbRow): AppUser {
   };
 }
 
+function requireProductionPersistence(feature: string) {
+  if (import.meta.env.PROD && (!isTursoConfigured || !turso)) {
+    throw new Error(`${feature} cannot be saved because Turso is not configured in this deployment.`);
+  }
+}
+
 export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<AppUser[]>(demoUsers);
   const [taskLibrary, setTaskLibrary] = useState<TaskLibraryItem[]>(demoTaskLibrary);
@@ -447,6 +453,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         }
       },
       applyLeave: async (employee, payload) => {
+        requireProductionPersistence('Leave request');
         const leave: LeaveRequest = {
           id: id('leave'),
           employee_id: employee.id,
