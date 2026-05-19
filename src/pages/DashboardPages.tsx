@@ -256,7 +256,7 @@ function SuperAdminDashboard() {
 
 export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
-  const { taskLibrary, approvedCustomTasks, logTask } = useWorkTrackData();
+  const { taskLibrary, approvedCustomTasks, logTask, taskLogs } = useWorkTrackData();
   const [taskId, setTaskId] = useState(`library:${taskLibrary.find((task) => !task.is_deleted)?.id ?? ''}`);
   const [status, setStatus] = useState<TaskStatus>('done');
   const [notes, setNotes] = useState('');
@@ -264,9 +264,23 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
   const [proofUrl, setProofUrl] = useState('');
   const [group, setGroup] = useState<'flat' | 'category' | 'platform'>('flat');
   const [search, setSearch] = useState('');
+  const today = todayInBusinessTz();
+
+  const loggedLibraryIds = new Set(
+    taskLogs
+      .filter((log) => log.employee_id === user?.id && log.logged_at.startsWith(today) && log.task_library_id)
+      .map((log) => log.task_library_id)
+  );
+
+  const loggedCustomIds = new Set(
+    taskLogs
+      .filter((log) => log.employee_id === user?.id && log.logged_at.startsWith(today) && log.approved_custom_task_id)
+      .map((log) => log.approved_custom_task_id)
+  );
+
   const taskOptions = [
     ...taskLibrary
-      .filter((task) => !task.is_deleted)
+      .filter((task) => !task.is_deleted && !loggedLibraryIds.has(task.id))
       .map((task) => ({
         id: `library:${task.id}`,
         label: task.name,
@@ -275,7 +289,7 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
         time: task.time_minutes,
       })),
     ...approvedCustomTasks
-      .filter((task) => task.employee_id === user?.id && !task.is_deleted)
+      .filter((task) => task.employee_id === user?.id && !task.is_deleted && !loggedCustomIds.has(task.id))
       .map((task) => ({
         id: `custom:${task.id}`,
         label: task.task_name,
@@ -382,14 +396,18 @@ function ApprovedCustomTasksList() {
             </div>
             <div className="flex flex-col items-end gap-2">
               <span className="text-xs text-zinc-500">Logged {loggedToday} time{loggedToday !== 1 ? 's' : ''} today</span>
-              <Button className="px-3 py-1.5 text-xs min-h-0" onClick={() => {
-                logTask({
-                  employeeId: user.id,
-                  taskId: `custom:${task.id}`,
-                  status: 'done'
-                });
-              }}>
-                <CheckCircle2 size={16} /> Log now
+              <Button 
+                className={`px-3 py-1.5 text-xs min-h-0 ${loggedToday >= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={loggedToday >= 1}
+                onClick={() => {
+                  logTask({
+                    employeeId: user.id,
+                    taskId: `custom:${task.id}`,
+                    status: 'done'
+                  });
+                }}
+              >
+                <CheckCircle2 size={16} /> {loggedToday >= 1 ? 'Already logged' : 'Log now'}
               </Button>
             </div>
           </div>
