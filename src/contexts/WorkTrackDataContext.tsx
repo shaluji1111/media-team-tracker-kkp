@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState, useEffect } from 'react';
 
 import {
   demoAuditEvents,
@@ -19,6 +19,7 @@ import {
 import { CATEGORIES } from '../lib/constants';
 import { todayInBusinessTz } from '../lib/dates';
 import { isValidJsid, makeDefaultPassword, normalizeJsid } from '../lib/jsid';
+import { turso } from '../lib/turso';
 import type {
   AppUser,
   ApprovedCustomTask,
@@ -118,6 +119,18 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
   const [dailyCompletions, setDailyCompletions] = useState<DailyCompletion[]>([]);
   const [taskAssignments, setTaskAssignments] = useState<TaskAssignment[]>([]);
 
+  useEffect(() => {
+    async function loadFromTurso() {
+      try {
+        const res = await turso.execute('SELECT * FROM custom_task_proposals ORDER BY created_at DESC');
+        setProposals(res.rows as unknown as CustomTaskProposal[]);
+      } catch (err) {
+        console.error('Failed to load custom task proposals from Turso:', err);
+      }
+    }
+    loadFromTurso();
+  }, []);
+
   const addAudit = (actor: AppUser, action: AuditAction, targetName: string, metadata: Record<string, unknown> = {}) => {
     setAuditEvents((current) => [
       {
@@ -193,7 +206,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         };
         setTaskLogs((current) => [log, ...current]);
       },
-      proposeTask: (employee, payload) => {
+      proposeTask: async (employee, payload) => {
         const proposal: CustomTaskProposal = {
           id: id('proposal'),
           employee_id: employee.id,
@@ -207,7 +220,30 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           review_note: null,
           created_at: new Date().toISOString(),
         };
+        
+        // Optimistically update UI
         setProposals((current) => [proposal, ...current]);
+
+        // Save to Turso
+        try {
+          await turso.execute({
+            sql: `INSERT INTO custom_task_proposals (id, employee_id, employee_name, task_name, description, category, proposed_time, status, created_at) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+              proposal.id,
+              proposal.employee_id,
+              proposal.employee_name,
+              proposal.task_name,
+              proposal.description,
+              proposal.category,
+              proposal.proposed_time,
+              proposal.status,
+              proposal.created_at
+            ]
+          });
+        } catch (err) {
+          console.error('Failed to save custom task proposal to Turso:', err);
+        }
       },
       applyLeave: (employee, payload) => {
         const leave: LeaveRequest = {
@@ -225,34 +261,64 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         };
         setLeaves((current) => [leave, ...current]);
       },
-      reviewProposal: (actor, proposalId, approve, note) => {
+      reviewProposal: async (actor, proposalId, approve, note) => {
+        const proposal = proposals.find(p => p.id === proposalId);
+        if (!proposal) return;
+
+        const finalStatus: CustomTaskProposal['status'] = approve
+          ? proposal.status === 'pending_tl' && actor.role === 'team_lead'
+            ? 'pending_manager'
+            : 'approved'
+          : 'rejected';
+          
+        let customTaskDetails: ApprovedCustomTask | null = null;
+        if (finalStatus === 'approved') {
+          customTaskDetails = {
+            id: id('custom'),
+            employee_id: proposal.employee_id,
+            task_name: proposal.task_name,
+            category: proposal.category,
+            time_minutes: proposal.proposed_time,
+            approved_at: new Date().toISOString(),
+          };
+          setApprovedCustomTasks((customTasks) => [customTaskDetails as ApprovedCustomTask, ...customTasks]);
+        }
+
+        const reviewNote = note ?? null;
+        
         setProposals((current) =>
-          current.map((proposal) => {
-            if (proposal.id !== proposalId) {
-              return proposal;
-            }
-            const status = approve
-              ? proposal.status === 'pending_tl' && actor.role === 'team_lead'
-                ? 'pending_manager'
-                : 'approved'
-              : 'rejected';
-            if (status === 'approved') {
-              setApprovedCustomTasks((customTasks) => [
-                {
-                  id: id('custom'),
-                  employee_id: proposal.employee_id,
-                  task_name: proposal.task_name,
-                  category: proposal.category,
-                  time_minutes: proposal.proposed_time,
-                  approved_at: new Date().toISOString(),
-                },
-                ...customTasks,
-              ]);
-            }
-            return { ...proposal, status, reviewed_by: actor.id, review_note: note ?? null };
-          }),
+          current.map((p) => {
+            if (p.id !== proposalId) return p;
+            return { ...p, status: finalStatus, reviewed_by: actor.id, review_note: reviewNote };
+          })
         );
         addAudit(actor, 'proposal_reviewed', proposalId, { approve, note });
+
+        // Save to Turso
+        try {
+          await turso.execute({
+            sql: 'UPDATE custom_task_proposals SET status = ?, reviewed_by = ?, review_note = ? WHERE id = ?',
+            args: [finalStatus, actor.id, reviewNote, proposalId]
+          });
+
+          // If approved, also insert into approved_custom_tasks in Turso
+          if (finalStatus === 'approved' && customTaskDetails) {
+            const task = customTaskDetails as ApprovedCustomTask;
+            await turso.execute({
+              sql: 'INSERT INTO approved_custom_tasks (id, employee_id, task_name, category, time_minutes, approved_at) VALUES (?, ?, ?, ?, ?, ?)',
+              args: [
+                task.id,
+                task.employee_id,
+                task.task_name,
+                task.category,
+                task.time_minutes,
+                task.approved_at
+              ]
+            });
+          }
+        } catch (err) {
+          console.error('Failed to update review status in Turso:', err);
+        }
       },
       reviewLeave: (actor, leaveId, approve, note) => {
         setLeaves((current) =>
