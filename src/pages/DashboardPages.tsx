@@ -179,10 +179,7 @@ function TeamLeadDashboard() {
   return (
     <>
       <SectionHeader title="Team Lead Dashboard" />
-      <Card className="mb-5">
-        <p className="text-sm text-zinc-400">Your score is based on your team's performance</p>
-        <p className="mt-2 text-5xl font-semibold text-white">{formatScore(score)}</p>
-      </Card>
+      <DashboardScoreCard score={score} />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {metrics.map((metric) => (
           <TeamMetricCard key={metric.user.id} metric={metric} />
@@ -201,10 +198,7 @@ function ManagerDashboard() {
   return (
     <>
       <SectionHeader title="Manager Dashboard" />
-      <Card className="mb-5">
-        <p className="text-sm text-zinc-400">Your score is based on your team's performance</p>
-        <p className="mt-2 text-5xl font-semibold text-white">{formatScore(score)}</p>
-      </Card>
+      <DashboardScoreCard score={score} />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {metrics.map((metric) => (
           <Card key={metric.user.id}>
@@ -477,9 +471,18 @@ function TaskLogTable({ logs }: { logs: TaskLog[] }) {
   );
 }
 
+function DashboardScoreCard({ score }: { score: number | null }) {
+  return (
+    <Card className="mb-5 overflow-hidden border-pink-500/20 bg-[linear-gradient(135deg,rgba(219,39,119,0.16),rgba(26,29,35,0.96)_42%,rgba(26,29,35,1))] shadow-[0_18px_50px_rgba(219,39,119,0.08)]">
+      <p className="text-sm text-pink-100/80">Your score is based on your team's performance</p>
+      <p className="mt-2 text-5xl font-semibold text-pink-100">{formatScore(score)}</p>
+    </Card>
+  );
+}
+
 function TeamMetricCard({ metric }: { metric: TeamMetric }) {
   return (
-    <Card>
+    <Card className="border-pink-500/15 shadow-[0_16px_45px_rgba(219,39,119,0.06)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">{metric.user.name}</p>
@@ -498,18 +501,18 @@ function TeamMetricCard({ metric }: { metric: TeamMetric }) {
 
 function StatCard({ label, value, danger }: { label: string; value: string | number; danger?: boolean }) {
   return (
-    <Card className={danger ? 'border-red-500/20' : undefined}>
+    <Card className={danger ? 'border-red-500/20' : 'border-pink-500/15'}>
       <p className="text-sm text-zinc-400">{label}</p>
-      <p className={`mt-2 text-3xl font-semibold ${danger ? 'text-red-200' : 'text-white'}`}>{value}</p>
+      <p className={`mt-2 text-3xl font-semibold ${danger ? 'text-red-200' : 'text-pink-100'}`}>{value}</p>
     </Card>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl bg-white/[0.04] p-3">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className="mt-1 font-semibold text-white">{value}</p>
+    <div className="rounded-xl border border-pink-500/10 bg-pink-500/[0.06] p-3">
+      <p className="text-xs text-pink-100/50">{label}</p>
+      <p className="mt-1 font-semibold text-pink-50">{value}</p>
     </div>
   );
 }

@@ -82,7 +82,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           className={({ isActive }) =>
             clsx(
               'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition',
-              isActive ? 'bg-blue-500 text-white shadow-lg shadow-blue-950/30' : 'text-zinc-400 hover:bg-white/8 hover:text-white',
+              isActive
+                ? 'bg-[#DB2777] text-white shadow-lg shadow-pink-950/30'
+                : 'text-zinc-400 hover:bg-pink-500/10 hover:text-white',
             )
           }
         >
@@ -95,7 +97,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-0">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/8 bg-[#101114]/95 p-5 lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-pink-500/10 bg-[#101114]/95 p-5 lg:block">
         <div className="mb-8 flex items-center gap-3">
           <img
             src={khulKePuchoLogo}
@@ -110,7 +112,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {nav}
       </aside>
 
-      <header className="sticky top-0 z-30 border-b border-white/8 bg-[#0F0F0F]/85 px-4 py-3 backdrop-blur lg:ml-72">
+      <header className="sticky top-0 z-30 border-b border-pink-500/10 bg-[#0F0F0F]/85 px-4 py-3 backdrop-blur lg:ml-72">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" className="lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Open menu">
@@ -202,7 +204,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
             <button
-              className="flex min-h-16 items-center gap-4 rounded-2xl border border-white/10 bg-[#1A1D23] px-4 text-base font-semibold text-white"
+              className="flex min-h-16 items-center gap-4 rounded-2xl border border-pink-500/15 bg-[#1A1D23] px-4 text-base font-semibold text-white"
               onClick={() => void logout()}
             >
               <LogOut size={20} />
@@ -223,7 +225,7 @@ function MobileNavItem({ item }: { item: NavItem }) {
       to={item.to}
       className={clsx(
         'grid min-h-14 place-items-center rounded-xl text-xs font-medium transition',
-        active ? 'bg-blue-500 text-white' : 'text-zinc-400 hover:bg-white/8 hover:text-white',
+        active ? 'bg-[#DB2777] text-white' : 'text-zinc-400 hover:bg-pink-500/10 hover:text-white',
       )}
     >
       {item.icon}
