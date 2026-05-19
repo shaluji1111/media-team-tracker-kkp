@@ -86,6 +86,9 @@ export function ProposalsPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (!user) {
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
@@ -135,18 +138,54 @@ export function ProposalsPage() {
 
 export function LeavePage() {
   const { user } = useAuth();
-  const { leaves, applyLeave, reviewLeave } = useWorkTrackData();
+  const { leaves, users, applyLeave, reviewLeave } = useWorkTrackData();
   const [startDate, setStartDate] = useState(todayInBusinessTz());
   const [endDate, setEndDate] = useState(todayInBusinessTz());
   const [leaveType, setLeaveType] = useState<LeaveRequest['leave_type']>('sick');
   const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   if (!user) return <Navigate to="/login" replace />;
-  const visible = user.role === 'employee' ? leaves.filter((leave) => leave.employee_id === user.id) : leaves;
 
-  function submit(event: FormEvent) {
+  const canViewLeave = (leave: LeaveRequest) => {
+    if (user.role === 'super_admin') {
+      return true;
+    }
+    if (user.role === 'employee') {
+      return leave.employee_id === user.id;
+    }
+    const employee = users.find((candidate) => candidate.id === leave.employee_id);
+    if (!employee) {
+      return false;
+    }
+    if (user.role === 'team_lead') {
+      return employee.team_lead_id === user.id;
+    }
+    if (user.role === 'manager') {
+      const lead = users.find((candidate) => candidate.id === employee.team_lead_id);
+      return lead?.manager_id === user.id;
+    }
+    return false;
+  };
+
+  const visible = leaves.filter(canViewLeave);
+
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    applyLeave(user!, { startDate, endDate, leaveType, reason });
-    setReason('');
+    if (!user) {
+      return;
+    }
+    const currentUser = user;
+    setError('');
+    setSubmitting(true);
+    try {
+      await applyLeave(currentUser, { startDate, endDate, leaveType, reason });
+      setReason('');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not submit leave request.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -154,7 +193,7 @@ export function LeavePage() {
       <SectionHeader title={user.role === 'employee' ? 'Leave Request' : 'Leave Management'} />
       {user.role === 'employee' ? (
         <Card className="mb-5">
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => void submit(event)}>
             <Field label="Start date"><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></Field>
             <Field label="End date"><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></Field>
             <Field label="Leave type">
@@ -163,7 +202,8 @@ export function LeavePage() {
               </Select>
             </Field>
             <Field label="Reason"><Input value={reason} onChange={(event) => setReason(event.target.value)} required /></Field>
-            <Button className="md:col-span-2">Apply for leave</Button>
+            {error ? <p className="rounded-xl bg-red-500/12 p-3 text-sm text-red-200 md:col-span-2">{error}</p> : null}
+            <Button className="md:col-span-2" disabled={submitting}>{submitting ? 'Applying...' : 'Apply for leave'}</Button>
           </form>
         </Card>
       ) : null}
@@ -181,8 +221,8 @@ export function LeavePage() {
               </div>
               {user.role !== 'employee' && !['approved', 'rejected'].includes(leave.status) ? (
                 <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => reviewLeave(user, leave.id, true)}>Approve</Button>
-                  <Button variant="danger" onClick={() => reviewLeave(user, leave.id, false)}>Reject</Button>
+                  <Button variant="secondary" onClick={() => void reviewLeave(user, leave.id, true)}>Approve</Button>
+                  <Button variant="danger" onClick={() => void reviewLeave(user, leave.id, false)}>Reject</Button>
                 </div>
               ) : null}
             </div>
@@ -248,8 +288,26 @@ export function ApprovalsPage() {
   const visibleProposals = proposals.filter(canReviewProposal);
   const pendingProposals = visibleProposals.filter((p) => !['approved', 'rejected'].includes(p.status));
   const decidedProposals = visibleProposals.filter((p) => ['approved', 'rejected'].includes(p.status));
-  const pendingLeaves = leaves.filter((l) => !['approved', 'rejected'].includes(l.status));
-  const decidedLeaves = leaves.filter((l) => ['approved', 'rejected'].includes(l.status));
+  const canReviewLeave = (leave: LeaveRequest) => {
+    if (user.role === 'super_admin') {
+      return true;
+    }
+    const employee = users.find((candidate) => candidate.id === leave.employee_id);
+    if (!employee) {
+      return false;
+    }
+    if (user.role === 'team_lead') {
+      return employee.team_lead_id === user.id;
+    }
+    if (user.role === 'manager') {
+      const lead = users.find((candidate) => candidate.id === employee.team_lead_id);
+      return lead?.manager_id === user.id;
+    }
+    return false;
+  };
+  const visibleLeaves = leaves.filter(canReviewLeave);
+  const pendingLeaves = visibleLeaves.filter((l) => !['approved', 'rejected'].includes(l.status));
+  const decidedLeaves = visibleLeaves.filter((l) => ['approved', 'rejected'].includes(l.status));
 
   return (
     <>

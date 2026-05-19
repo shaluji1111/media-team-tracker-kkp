@@ -66,9 +66,9 @@ interface WorkTrackDataValue {
   reportRowsForUser: (viewer: AppUser) => ReportRow[];
   logTask: (payload: LogTaskPayload) => Promise<void>;
   proposeTask: (employee: AppUser, payload: { taskName: string; description: string; category: string; proposedTime: number }) => Promise<void>;
-  applyLeave: (employee: AppUser, payload: { startDate: string; endDate: string; leaveType: LeaveRequest['leave_type']; reason: string }) => void;
+  applyLeave: (employee: AppUser, payload: { startDate: string; endDate: string; leaveType: LeaveRequest['leave_type']; reason: string }) => Promise<void>;
   reviewProposal: (actor: AppUser, proposalId: string, approve: boolean, note?: string) => Promise<void>;
-  reviewLeave: (actor: AppUser, leaveId: string, approve: boolean, note?: string) => void;
+  reviewLeave: (actor: AppUser, leaveId: string, approve: boolean, note?: string) => Promise<void>;
   markNotificationRead: (id: string) => void;
   sendBroadcast: (actor: AppUser, message: string, target: 'all' | 'employee' | 'team_lead' | 'manager' | 'super_admin') => number;
   addLibraryTask: (actor: AppUser, payload: { name: string; category: string; platformTag: string; timeMinutes: number }) => void;
@@ -158,6 +158,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           taskLogsRes,
           proposalsRes,
           approvedRes,
+          leavesRes,
           dailyTemplatesRes,
           dailyCompletionsRes,
           taskAssignmentsRes,
@@ -168,6 +169,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           turso.execute('SELECT * FROM task_logs ORDER BY logged_at DESC'),
           turso.execute('SELECT * FROM custom_task_proposals ORDER BY created_at DESC'),
           turso.execute('SELECT * FROM approved_custom_tasks ORDER BY approved_at DESC'),
+          turso.execute('SELECT * FROM leave_requests ORDER BY created_at DESC'),
           turso.execute('SELECT * FROM daily_templates ORDER BY created_at DESC'),
           turso.execute('SELECT * FROM daily_completions ORDER BY completed_at DESC'),
           turso.execute('SELECT * FROM task_assignments ORDER BY assigned_at DESC'),
@@ -236,6 +238,20 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           is_deleted: dbBoolean(row.is_deleted),
         }));
         setApprovedCustomTasks(approvedRows);
+
+        setLeaves(leavesRes.rows.map((row) => ({
+          id: String(row.id),
+          employee_id: String(row.employee_id),
+          employee_name: String(row.employee_name),
+          start_date: String(row.start_date),
+          end_date: String(row.end_date),
+          leave_type: String(row.leave_type) as LeaveRequest['leave_type'],
+          reason: String(row.reason),
+          status: String(row.status) as LeaveRequest['status'],
+          reviewed_by: nullableString(row.reviewed_by),
+          override_by: nullableString(row.override_by),
+          created_at: String(row.created_at),
+        })));
 
         setDailyTemplates(dailyTemplatesRes.rows.map((row) => ({
           id: String(row.id),
@@ -430,7 +446,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           }
         }
       },
-      applyLeave: (employee, payload) => {
+      applyLeave: async (employee, payload) => {
         const leave: LeaveRequest = {
           id: id('leave'),
           employee_id: employee.id,
@@ -445,6 +461,33 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           created_at: new Date().toISOString(),
         };
         setLeaves((current) => [leave, ...current]);
+        if (isTursoConfigured && turso) {
+          try {
+            await turso.execute({
+              sql: `INSERT INTO leave_requests (
+                id, employee_id, employee_name, start_date, end_date, leave_type, reason, status,
+                reviewed_by, override_by, created_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              args: [
+                leave.id,
+                leave.employee_id,
+                leave.employee_name,
+                leave.start_date,
+                leave.end_date,
+                leave.leave_type,
+                leave.reason,
+                leave.status,
+                leave.reviewed_by,
+                leave.override_by,
+                leave.created_at,
+              ],
+            });
+          } catch (err) {
+            setLeaves((current) => current.filter((item) => item.id !== leave.id));
+            console.error('Failed to save leave request to Turso:', err);
+            throw err;
+          }
+        }
       },
       reviewProposal: async (actor, proposalId, approve, note) => {
         const proposal = proposals.find(p => p.id === proposalId);
@@ -515,21 +558,34 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
           }
         }
       },
-      reviewLeave: (actor, leaveId, approve, note) => {
+      reviewLeave: async (actor, leaveId, approve, note) => {
+        const leave = leaves.find((candidate) => candidate.id === leaveId);
+        if (!leave) return;
+        const status = approve
+          ? leave.status === 'pending_tl' && actor.role === 'team_lead'
+            ? 'pending_manager'
+            : 'approved'
+          : 'rejected';
         setLeaves((current) =>
           current.map((leave) => {
             if (leave.id !== leaveId) {
               return leave;
             }
-            const status = approve
-              ? leave.status === 'pending_tl' && actor.role === 'team_lead'
-                ? 'pending_manager'
-                : 'approved'
-              : 'rejected';
-            return { ...leave, status, reviewed_by: actor.id, review_note: note ?? null };
+            return { ...leave, status, reviewed_by: actor.id };
           }),
         );
         addAudit(actor, 'leave_reviewed', leaveId, { approve, note });
+        if (isTursoConfigured && turso) {
+          try {
+            await turso.execute({
+              sql: 'UPDATE leave_requests SET status = ?, reviewed_by = ? WHERE id = ?',
+              args: [status, actor.id, leaveId],
+            });
+          } catch (err) {
+            console.error('Failed to update leave request in Turso:', err);
+            throw err;
+          }
+        }
       },
       markNotificationRead: (notificationId) => {
         setNotifications((current) => current.map((note) => (note.id === notificationId ? { ...note, is_read: true } : note)));
