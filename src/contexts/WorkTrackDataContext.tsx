@@ -17,7 +17,7 @@ import {
   teamMetricsFor,
 } from '../data/mockData';
 import { CATEGORIES } from '../lib/constants';
-import { todayInBusinessTz } from '../lib/dates';
+import { businessDateFor, todayInBusinessTz } from '../lib/dates';
 import { isValidJsid, makeDefaultPassword, normalizeJsid } from '../lib/jsid';
 import { isTursoConfigured, turso } from '../lib/turso';
 import type {
@@ -529,11 +529,13 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         }
 
         const approvedTaskForLog = customTaskDetails ?? existingApprovedTask ?? null;
+        const currentBusinessDate = todayInBusinessTz();
         const alreadyLoggedApprovedTask = approvedTaskForLog
           ? taskLogs.some(
               (log) =>
                 log.employee_id === approvedTaskForLog.employee_id &&
-                log.approved_custom_task_id === approvedTaskForLog.id,
+                log.approved_custom_task_id === approvedTaskForLog.id &&
+                businessDateFor(log.logged_at) === currentBusinessDate,
             )
           : false;
         const autoLog: TaskLog | null =
@@ -1053,7 +1055,10 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
         }
         if (isDone) {
           const alreadyLogged = taskLogs.some(
-            (log) => log.employee_id === employee.id && log.task_library_id === template.task_library_id && log.logged_at.startsWith(date),
+            (log) =>
+              log.employee_id === employee.id &&
+              log.task_library_id === template.task_library_id &&
+              businessDateFor(log.logged_at) === date,
           );
           if (!alreadyLogged) {
             const log: TaskLog = {
@@ -1106,7 +1111,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
             (log) =>
               log.employee_id === employee.id &&
               log.task_library_id === template.task_library_id &&
-              log.logged_at.startsWith(date) &&
+              businessDateFor(log.logged_at) === date &&
               log.notes === 'Daily task',
           );
           setTaskLogs((current) => current.filter((log) => log.id !== autoLog?.id));

@@ -1,4 +1,4 @@
-import { todayInBusinessTz } from '../lib/dates';
+import { businessDateFor, todayInBusinessTz } from '../lib/dates';
 import { averageNullable, employeeDailyScore, statusForMinutes } from '../lib/score';
 import type {
   AppUser,
@@ -116,7 +116,7 @@ export function getVisibleUsers(user: AppUser, users = demoUsers): AppUser[] {
 
 export function logsForUser(employeeId: string, logs = demoTaskLogs): TaskLog[] {
   const currentBusinessDate = todayInBusinessTz();
-  return logs.filter((log) => log.employee_id === employeeId && log.logged_at.slice(0, 10) === currentBusinessDate);
+  return logs.filter((log) => log.employee_id === employeeId && businessDateFor(log.logged_at) === currentBusinessDate);
 }
 
 export function minutesForEmployee(employeeId: string, logs = demoTaskLogs): number | null {

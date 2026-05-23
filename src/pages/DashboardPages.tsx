@@ -8,7 +8,7 @@ import { Button, Card, Field, Input, Modal, SectionHeader, Select, Textarea } fr
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkTrackData } from '../contexts/WorkTrackDataContext';
 import { MIN_PRODUCTIVE_HOURS } from '../lib/constants';
-import { businessWeekStart, formatDateTime, todayInBusinessTz, withinHours } from '../lib/dates';
+import { businessDateFor, businessWeekStart, formatDateTime, todayInBusinessTz, withinHours } from '../lib/dates';
 import { formatHoursFromMinutes, formatScore } from '../lib/score';
 import type { TaskLog, TaskStatus, TeamMetric } from '../types';
 
@@ -37,8 +37,11 @@ function EmployeeDashboard() {
   const today = todayInBusinessTz();
   const weekStart = businessWeekStart();
   const logs = taskLogs.filter((log) => log.employee_id === user?.id);
-  const todayLogs = logs.filter((log) => log.logged_at.startsWith(today));
-  const weekLogs = logs.filter((log) => log.logged_at.slice(0, 10) >= weekStart && log.logged_at.slice(0, 10) <= today);
+  const todayLogs = logs.filter((log) => businessDateFor(log.logged_at) === today);
+  const weekLogs = logs.filter((log) => {
+    const logDate = businessDateFor(log.logged_at);
+    return logDate >= weekStart && logDate <= today;
+  });
   const minutesToday = todayLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
   const weeklyMinutes = weekLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
   const tasksDone = todayLogs.filter((log) => log.status === 'done').length;
@@ -226,7 +229,7 @@ function SuperAdminDashboard() {
   const metrics = user ? teamMetricsForUser(user) : [];
   const employees = users.filter((candidate) => candidate.role === 'employee');
   const today = todayInBusinessTz();
-  const todayLogs = taskLogs.filter((log) => log.logged_at.startsWith(today));
+  const todayLogs = taskLogs.filter((log) => businessDateFor(log.logged_at) === today);
   const totalMinutes = todayLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
   const flagged = metrics.filter((metric) => metric.status === 'flagged').length;
 
@@ -291,7 +294,7 @@ export function LogTaskModal({ open, onClose }: { open: boolean; onClose: () => 
 
   const loggedLibraryIds = new Set(
     taskLogs
-      .filter((log) => log.employee_id === user?.id && log.logged_at.startsWith(today) && log.task_library_id)
+      .filter((log) => log.employee_id === user?.id && businessDateFor(log.logged_at) === today && log.task_library_id)
       .map((log) => log.task_library_id)
   );
 
@@ -415,7 +418,7 @@ function ApprovedCustomTasksList() {
     <div className="grid gap-2">
       {myApprovedTasks.map((task) => {
         const loggedToday = taskLogs.filter(
-          (log) => log.employee_id === user.id && log.approved_custom_task_id === task.id && log.logged_at.startsWith(today),
+          (log) => log.employee_id === user.id && log.approved_custom_task_id === task.id && businessDateFor(log.logged_at) === today,
         ).length;
 
         return (

@@ -1,5 +1,6 @@
 import {
   Bell,
+  CalendarDays,
   Check,
   ClipboardList,
   Download,
@@ -21,7 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWorkTrackData } from '../contexts/WorkTrackDataContext';
 import { CATEGORIES, PLATFORMS, ROLE_LABELS } from '../lib/constants';
 import { exportCsv } from '../lib/csv';
-import { formatDate, formatDateTime, todayInBusinessTz } from '../lib/dates';
+import { businessDateFor, formatDate, formatDateTime, todayInBusinessTz } from '../lib/dates';
 import { formatHoursFromMinutes, formatScore } from '../lib/score';
 import type {
   AppUser,
@@ -264,6 +265,7 @@ export function NotificationsPage() {
 export function ApprovalsPage() {
   const { user } = useAuth();
   const { proposals, leaves, users, reviewProposal, reviewLeave } = useWorkTrackData();
+  const [approvalDate, setApprovalDate] = useState(todayInBusinessTz());
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'employee') return <Navigate to="/proposals" replace />;
 
@@ -285,7 +287,9 @@ export function ApprovalsPage() {
     return false;
   };
 
-  const visibleProposals = proposals.filter(canReviewProposal);
+  const visibleProposals = proposals
+    .filter(canReviewProposal)
+    .filter((proposal) => businessDateFor(proposal.created_at) === approvalDate);
   const pendingProposals = visibleProposals.filter((p) => !['approved', 'rejected'].includes(p.status));
   const decidedProposals = visibleProposals.filter((p) => ['approved', 'rejected'].includes(p.status));
   const canReviewLeave = (leave: LeaveRequest) => {
@@ -305,13 +309,27 @@ export function ApprovalsPage() {
     }
     return false;
   };
-  const visibleLeaves = leaves.filter(canReviewLeave);
+  const visibleLeaves = leaves
+    .filter(canReviewLeave)
+    .filter((leave) => leave.start_date <= approvalDate && leave.end_date >= approvalDate);
   const pendingLeaves = visibleLeaves.filter((l) => !['approved', 'rejected'].includes(l.status));
   const decidedLeaves = visibleLeaves.filter((l) => ['approved', 'rejected'].includes(l.status));
 
   return (
     <>
-      <SectionHeader title="Approvals" />
+      <SectionHeader
+        title="Approvals"
+        action={(
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end">
+            <Field label="Approval date">
+              <Input type="date" value={approvalDate} onChange={(event) => setApprovalDate(event.target.value)} />
+            </Field>
+            <Button type="button" variant="secondary" onClick={() => setApprovalDate(todayInBusinessTz())}>
+              <CalendarDays size={17} />Today
+            </Button>
+          </div>
+        )}
+      />
       <div className="grid gap-5 xl:grid-cols-2">
         {/* Custom Tasks */}
         <Card>
@@ -329,7 +347,7 @@ export function ApprovalsPage() {
               />
             ))}
             {!pendingProposals.length && !decidedProposals.length && (
-              <p className="text-sm text-zinc-500">No custom task proposals yet.</p>
+              <p className="text-sm text-zinc-500">No custom task proposals for this date.</p>
             )}
             {decidedProposals.length > 0 && (
               <>
@@ -371,7 +389,7 @@ export function ApprovalsPage() {
               />
             ))}
             {!pendingLeaves.length && !decidedLeaves.length && (
-              <p className="text-sm text-zinc-500">No leave requests yet.</p>
+              <p className="text-sm text-zinc-500">No leave requests for this date.</p>
             )}
             {decidedLeaves.length > 0 && (
               <>

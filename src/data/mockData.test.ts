@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { teamMetricsFor } from './mockData';
+import { todayInBusinessTz } from '../lib/dates';
 import type { AppUser, LeaveRequest } from '../types';
 
 describe('team metrics leave handling', () => {
   it('marks employees with approved leave today as on leave', () => {
+    const today = todayInBusinessTz();
     const manager: AppUser = {
       id: 'manager',
       jsid: 'JS1000',
@@ -45,8 +47,8 @@ describe('team metrics leave handling', () => {
       id: 'leave',
       employee_id: employee.id,
       employee_name: employee.name,
-      start_date: '2026-05-19',
-      end_date: '2026-05-19',
+      start_date: today,
+      end_date: today,
       leave_type: 'personal',
       reason: 'Planned leave',
       status: 'approved',

@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Sparkles, UserPlus } from 'lucide-react';
-import { type FormEvent, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -170,6 +170,57 @@ export function LoginPage() {
   );
 }
 
+interface CharacterPosition {
+  faceX: number;
+  faceY: number;
+  bodySkew: number;
+}
+
+interface FollowerPosition {
+  x: number;
+  y: number;
+}
+
+const defaultCharacterPosition: CharacterPosition = { faceX: 0, faceY: 0, bodySkew: 0 };
+const defaultFollowerPosition: FollowerPosition = { x: 0, y: 0 };
+
+function calculateCharacterPosition(element: HTMLDivElement | null, mouseX: number, mouseY: number): CharacterPosition {
+  if (!element) {
+    return defaultCharacterPosition;
+  }
+
+  const rect = element.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 3;
+  const deltaX = mouseX - centerX;
+  const deltaY = mouseY - centerY;
+
+  return {
+    faceX: Math.max(-15, Math.min(15, deltaX / 20)),
+    faceY: Math.max(-10, Math.min(10, deltaY / 30)),
+    bodySkew: Math.max(-6, Math.min(6, -deltaX / 120)),
+  };
+}
+
+function calculateFollowerPosition(
+  element: HTMLDivElement | null,
+  mouseX: number,
+  mouseY: number,
+  maxDistance: number,
+): FollowerPosition {
+  if (!element) {
+    return defaultFollowerPosition;
+  }
+
+  const rect = element.getBoundingClientRect();
+  const deltaX = mouseX - (rect.left + rect.width / 2);
+  const deltaY = mouseY - (rect.top + rect.height / 2);
+  const distance = Math.min(Math.sqrt(deltaX ** 2 + deltaY ** 2), maxDistance);
+  const angle = Math.atan2(deltaY, deltaX);
+
+  return { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance };
+}
+
 function AnimatedLoginCharacters({
   isTyping,
   passwordVisible,
@@ -177,21 +228,29 @@ function AnimatedLoginCharacters({
   isTyping: boolean;
   passwordVisible: boolean;
 }) {
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
   const [isPurpleBlinking, setIsPurpleBlinking] = useState(false);
   const [isBlackBlinking, setIsBlackBlinking] = useState(false);
-  const [isLookingAtEachOther, setIsLookingAtEachOther] = useState(false);
   const [isPurplePeeking, setIsPurplePeeking] = useState(false);
+  const [characterPositions, setCharacterPositions] = useState({
+    purple: defaultCharacterPosition,
+    black: defaultCharacterPosition,
+    yellow: defaultCharacterPosition,
+    orange: defaultCharacterPosition,
+  });
   const purpleRef = useRef<HTMLDivElement>(null);
   const blackRef = useRef<HTMLDivElement>(null);
   const yellowRef = useRef<HTMLDivElement>(null);
   const orangeRef = useRef<HTMLDivElement>(null);
+  const isLookingAtEachOther = isTyping;
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      setMouseX(event.clientX);
-      setMouseY(event.clientY);
+      setCharacterPositions({
+        purple: calculateCharacterPosition(purpleRef.current, event.clientX, event.clientY),
+        black: calculateCharacterPosition(blackRef.current, event.clientX, event.clientY),
+        yellow: calculateCharacterPosition(yellowRef.current, event.clientX, event.clientY),
+        orange: calculateCharacterPosition(orangeRef.current, event.clientX, event.clientY),
+      });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -239,53 +298,45 @@ function AnimatedLoginCharacters({
   }, []);
 
   useEffect(() => {
-    if (!isTyping) {
-      setIsLookingAtEachOther(false);
-      return undefined;
-    }
-
-    setIsLookingAtEachOther(true);
-    const timer = window.setTimeout(() => setIsLookingAtEachOther(false), 800);
-    return () => window.clearTimeout(timer);
-  }, [isTyping]);
-
-  useEffect(() => {
     if (!passwordVisible) {
-      setIsPurplePeeking(false);
-      return undefined;
+      const resetTimer = window.setTimeout(() => setIsPurplePeeking(false), 0);
+      return () => window.clearTimeout(resetTimer);
     }
 
-    const peekTimer = window.setTimeout(
-      () => {
+    let cancelled = false;
+    let hideTimer: number | undefined;
+    let peekTimer: number | undefined;
+
+    const schedulePeek = () => {
+      peekTimer = window.setTimeout(() => {
+        if (cancelled) {
+          return;
+        }
         setIsPurplePeeking(true);
-        window.setTimeout(() => setIsPurplePeeking(false), 800);
-      },
-      Math.random() * 3000 + 2000,
-    );
-
-    return () => window.clearTimeout(peekTimer);
-  }, [passwordVisible, isPurplePeeking]);
-
-  const calculatePosition = (ref: RefObject<HTMLDivElement | null>) => {
-    if (!ref.current) return { faceX: 0, faceY: 0, bodySkew: 0 };
-
-    const rect = ref.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 3;
-    const deltaX = mouseX - centerX;
-    const deltaY = mouseY - centerY;
-
-    return {
-      faceX: Math.max(-15, Math.min(15, deltaX / 20)),
-      faceY: Math.max(-10, Math.min(10, deltaY / 30)),
-      bodySkew: Math.max(-6, Math.min(6, -deltaX / 120)),
+        hideTimer = window.setTimeout(() => {
+          setIsPurplePeeking(false);
+          schedulePeek();
+        }, 800);
+      }, Math.random() * 3000 + 2000);
     };
-  };
 
-  const purplePos = calculatePosition(purpleRef);
-  const blackPos = calculatePosition(blackRef);
-  const yellowPos = calculatePosition(yellowRef);
-  const orangePos = calculatePosition(orangeRef);
+    schedulePeek();
+
+    return () => {
+      cancelled = true;
+      if (peekTimer !== undefined) {
+        window.clearTimeout(peekTimer);
+      }
+      if (hideTimer !== undefined) {
+        window.clearTimeout(hideTimer);
+      }
+    };
+  }, [passwordVisible]);
+
+  const purplePos = characterPositions.purple;
+  const blackPos = characterPositions.black;
+  const yellowPos = characterPositions.yellow;
+  const orangePos = characterPositions.orange;
 
   return (
     <div className="relative h-[390px] w-[520px] max-w-full">
@@ -458,34 +509,21 @@ function EyeBall({
   forceLookX?: number;
   forceLookY?: number;
 }) {
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
+  const [followerPosition, setFollowerPosition] = useState(defaultFollowerPosition);
   const eyeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      setMouseX(event.clientX);
-      setMouseY(event.clientY);
+      setFollowerPosition(calculateFollowerPosition(eyeRef.current, event.clientX, event.clientY, maxDistance));
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [maxDistance]);
 
-  const calculatePupilPosition = () => {
-    if (!eyeRef.current) return { x: 0, y: 0 };
-    if (forceLookX !== undefined && forceLookY !== undefined) return { x: forceLookX, y: forceLookY };
-
-    const eye = eyeRef.current.getBoundingClientRect();
-    const deltaX = mouseX - (eye.left + eye.width / 2);
-    const deltaY = mouseY - (eye.top + eye.height / 2);
-    const distance = Math.min(Math.sqrt(deltaX ** 2 + deltaY ** 2), maxDistance);
-    const angle = Math.atan2(deltaY, deltaX);
-
-    return { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance };
-  };
-
-  const pupilPosition = calculatePupilPosition();
+  const pupilPosition = forceLookX !== undefined && forceLookY !== undefined
+    ? { x: forceLookX, y: forceLookY }
+    : followerPosition;
 
   return (
     <div
@@ -527,34 +565,21 @@ function Pupil({
   forceLookX?: number;
   forceLookY?: number;
 }) {
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
+  const [followerPosition, setFollowerPosition] = useState(defaultFollowerPosition);
   const pupilRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      setMouseX(event.clientX);
-      setMouseY(event.clientY);
+      setFollowerPosition(calculateFollowerPosition(pupilRef.current, event.clientX, event.clientY, maxDistance));
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [maxDistance]);
 
-  const calculatePupilPosition = () => {
-    if (!pupilRef.current) return { x: 0, y: 0 };
-    if (forceLookX !== undefined && forceLookY !== undefined) return { x: forceLookX, y: forceLookY };
-
-    const pupil = pupilRef.current.getBoundingClientRect();
-    const deltaX = mouseX - (pupil.left + pupil.width / 2);
-    const deltaY = mouseY - (pupil.top + pupil.height / 2);
-    const distance = Math.min(Math.sqrt(deltaX ** 2 + deltaY ** 2), maxDistance);
-    const angle = Math.atan2(deltaY, deltaX);
-
-    return { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance };
-  };
-
-  const pupilPosition = calculatePupilPosition();
+  const pupilPosition = forceLookX !== undefined && forceLookY !== undefined
+    ? { x: forceLookX, y: forceLookY }
+    : followerPosition;
 
   return (
     <div

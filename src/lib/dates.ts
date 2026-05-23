@@ -7,6 +7,11 @@ export function todayInBusinessTz(date = new Date()): string {
   return format(toZonedTime(date, BUSINESS_TIME_ZONE), 'yyyy-MM-dd');
 }
 
+export function businessDateFor(value: string | Date): string {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  return todayInBusinessTz(date);
+}
+
 export function formatDateTime(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value;
   return new Intl.DateTimeFormat('en-IN', {
