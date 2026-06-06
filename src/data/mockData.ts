@@ -1,4 +1,4 @@
-import { businessDateFor, todayInBusinessTz } from '../lib/dates';
+import { businessDateFor, reportDateRange, todayInBusinessTz } from '../lib/dates';
 import { averageNullable, employeeDailyScore, statusForMinutes } from '../lib/score';
 import type {
   AppUser,
@@ -8,6 +8,7 @@ import type {
   LeaveRequest,
   NotificationItem,
   PasswordResetRequest,
+  ReportOptions,
   ReportRow,
   SelfRegistrationRequest,
   TaskLibraryItem,
@@ -123,16 +124,27 @@ export function getVisibleUsers(user: AppUser, users = demoUsers): AppUser[] {
 }
 
 export function logsForUser(employeeId: string, logs = demoTaskLogs): TaskLog[] {
-  const currentBusinessDate = todayInBusinessTz();
-  return logs.filter((log) => log.employee_id === employeeId && businessDateFor(log.logged_at) === currentBusinessDate);
+  const range = reportDateRange();
+  return logs.filter((log) => {
+    const businessDate = businessDateFor(log.logged_at);
+    return log.employee_id === employeeId && businessDate >= range.startDate && businessDate <= range.endDate;
+  });
 }
 
-export function minutesForEmployee(employeeId: string, logs = demoTaskLogs): number | null {
-  const logsToday = logsForUser(employeeId, logs);
-  if (logsToday.length === 0) {
+function logsForEmployeeInRange(employeeId: string, logs: TaskLog[], options?: Partial<ReportOptions>): TaskLog[] {
+  const range = reportDateRange(options);
+  return logs.filter((log) => {
+    const businessDate = businessDateFor(log.logged_at);
+    return log.employee_id === employeeId && businessDate >= range.startDate && businessDate <= range.endDate;
+  });
+}
+
+export function minutesForEmployee(employeeId: string, logs = demoTaskLogs, options?: Partial<ReportOptions>): number | null {
+  const employeeLogs = logsForEmployeeInRange(employeeId, logs, options);
+  if (employeeLogs.length === 0) {
     return null;
   }
-  return logsToday.reduce((sum, log) => sum + log.task_time_snapshot, 0);
+  return employeeLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
 }
 
 export function scoreForUser(user: AppUser, users = demoUsers, logs = demoTaskLogs): number | null {
@@ -155,13 +167,24 @@ export function scoreForUser(user: AppUser, users = demoUsers, logs = demoTaskLo
 }
 
 function hasApprovedLeaveToday(user: AppUser, leaves = demoLeaves): boolean {
-  const currentBusinessDate = todayInBusinessTz();
+  const { startDate, endDate } = reportDateRange();
   return leaves.some(
     (leave) =>
       leave.employee_id === user.id &&
       leave.status === 'approved' &&
-      leave.start_date <= currentBusinessDate &&
-      leave.end_date >= currentBusinessDate,
+      leave.start_date <= endDate &&
+      leave.end_date >= startDate,
+  );
+}
+
+function hasApprovedLeaveInRange(user: AppUser, leaves: LeaveRequest[], options?: Partial<ReportOptions>): boolean {
+  const { startDate, endDate } = reportDateRange(options);
+  return leaves.some(
+    (leave) =>
+      leave.employee_id === user.id &&
+      leave.status === 'approved' &&
+      leave.start_date <= endDate &&
+      leave.end_date >= startDate,
   );
 }
 
@@ -184,18 +207,26 @@ export function teamMetricsFor(viewer: AppUser, users = demoUsers, logs = demoTa
     });
 }
 
-export function reportRowsFor(viewer: AppUser, users = demoUsers, logs = demoTaskLogs, leaves = demoLeaves): ReportRow[] {
+export function reportRowsFor(
+  viewer: AppUser,
+  users = demoUsers,
+  logs = demoTaskLogs,
+  leaves = demoLeaves,
+  options?: Partial<ReportOptions>,
+): ReportRow[] {
+  const range = reportDateRange(options);
   const visibleEmployees = getVisibleUsers(viewer, users).filter((user) => user.role === 'employee');
   return visibleEmployees.map((employee) => {
-    const employeeLogs = logsForUser(employee.id, logs);
+    const employeeLogs = logsForEmployeeInRange(employee.id, logs, options);
     const totalMinutes = employeeLogs.reduce((sum, log) => sum + log.task_time_snapshot, 0);
-    const approvedLeaveToday = hasApprovedLeaveToday(employee, leaves);
+    const averageMinutesPerDay = employeeLogs.length ? totalMinutes / range.days : null;
+    const approvedLeave = range.days === 1 && hasApprovedLeaveInRange(employee, leaves, options);
     return {
       employee,
       taskCount: employeeLogs.length,
       totalHours: totalMinutes / 60,
-      score: employeeDailyScore(employeeLogs.length ? totalMinutes : null, approvedLeaveToday),
-      status: statusForMinutes(employeeLogs.length ? totalMinutes : null, approvedLeaveToday),
+      score: employeeDailyScore(averageMinutesPerDay, approvedLeave),
+      status: statusForMinutes(averageMinutesPerDay, approvedLeave),
     };
   });
 }

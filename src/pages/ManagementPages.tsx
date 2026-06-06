@@ -22,7 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWorkTrackData } from '../contexts/WorkTrackDataContext';
 import { CATEGORIES, PLATFORMS, ROLE_LABELS } from '../lib/constants';
 import { exportCsv } from '../lib/csv';
-import { businessDateFor, formatDate, formatDateTime, todayInBusinessTz } from '../lib/dates';
+import { businessDateFor, businessWeekStart, formatDate, formatDateTime, reportDateRange, todayInBusinessTz } from '../lib/dates';
 import { formatHoursFromMinutes, formatScore } from '../lib/score';
 import type {
   AppUser,
@@ -30,6 +30,7 @@ import type {
   LeaveRequest,
   PasswordResetRequest,
   ProposalStatus,
+  ReportPeriod,
   ReportRow,
   Role,
   SelfRegistrationRequest,
@@ -424,24 +425,62 @@ export function ReportsPage() {
   const { reportRowsForUser } = useWorkTrackData();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
-  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [period, setPeriod] = useState<ReportPeriod>('daily');
+  const [reportDate, setReportDate] = useState(todayInBusinessTz());
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'employee') return <Navigate to="/dashboard" replace />;
-  const rows = reportRowsForUser(user).filter((row) => {
+  const range = reportDateRange({ period, date: reportDate });
+  const rows = reportRowsForUser(user, { period, date: reportDate }).filter((row) => {
     const matchesQuery = `${row.employee.name} ${row.employee.role} ${row.employee.department}`.toLowerCase().includes(query.toLowerCase());
     const matchesStatus = status === 'all' || row.status === status;
     return matchesQuery && matchesStatus;
   });
   const topPerformer = [...rows].sort((a, b) => (b.score ?? -1) - (a.score ?? -1))[0];
-  const averageHours = rows.length ? rows.reduce((sum, row) => sum + row.totalHours, 0) / rows.length : 0;
+  const averageHours = rows.length ? rows.reduce((sum, row) => sum + row.totalHours, 0) / rows.length / range.days : 0;
   const totalTasks = rows.reduce((sum, row) => sum + row.taskCount, 0);
+  const periodLabel = period[0].toUpperCase() + period.slice(1);
+  const rangeLabel = range.startDate === range.endDate ? formatDate(range.startDate) : `${formatDate(range.startDate)} - ${formatDate(range.endDate)}`;
+  const dateInputValue = period === 'monthly' ? reportDate.slice(0, 7) : reportDate;
+
+  function changePeriod(nextPeriod: ReportPeriod) {
+    setPeriod(nextPeriod);
+    setReportDate((current) => {
+      if (nextPeriod === 'monthly') {
+        return `${current.slice(0, 7)}-01`;
+      }
+      if (nextPeriod === 'weekly') {
+        return businessWeekStart(new Date(`${current}T00:00:00+05:30`));
+      }
+      return current;
+    });
+  }
+
+  function changeReportDate(value: string) {
+    if (!value) {
+      return;
+    }
+    if (period === 'monthly') {
+      setReportDate(`${value}-01`);
+      return;
+    }
+    if (period === 'weekly') {
+      setReportDate(businessWeekStart(new Date(`${value}T00:00:00+05:30`)));
+      return;
+    }
+    setReportDate(value);
+  }
 
   async function exportPdf() {
     setExporting(true);
+    setExportError('');
     try {
       const { exportReportPdf } = await import('../lib/pdf');
-      await exportReportPdf(rows, 'WorkTrack Daily Report');
+      await exportReportPdf(rows, `WorkTrack ${periodLabel} Report`, rangeLabel);
+    } catch (error) {
+      console.error('Failed to export PDF report:', error);
+      setExportError('PDF export failed. Please try again.');
     } finally {
       setExporting(false);
     }
@@ -451,12 +490,13 @@ export function ReportsPage() {
     <>
       <SectionHeader
         title="Reports"
-        action={<div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => exportCsv(rows.map(csvRow), 'worktrack-report.csv')}><Download size={17} />CSV</Button><Button onClick={() => void exportPdf()} disabled={exporting}><FileDown size={17} />{exporting ? 'Exporting...' : 'PDF'}</Button></div>}
+        action={<div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => exportCsv(rows.map(csvRow), `worktrack-${period}-report-${range.startDate}.csv`)}><Download size={17} />CSV</Button><Button onClick={() => void exportPdf()} disabled={exporting}><FileDown size={17} />{exporting ? 'Exporting...' : 'PDF'}</Button></div>}
       />
+      {exportError ? <p className="mb-3 text-sm font-medium text-red-300">{exportError}</p> : null}
       <Card className="mb-5">
         <div className="grid gap-3 md:grid-cols-4">
           <Field label="Report type">
-            <Select value={period} onChange={(event) => setPeriod(event.target.value as 'daily' | 'weekly' | 'monthly')}>
+            <Select value={period} onChange={(event) => changePeriod(event.target.value as ReportPeriod)}>
               <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option>
             </Select>
           </Field>
@@ -467,7 +507,7 @@ export function ReportsPage() {
             </Select>
           </Field>
           <Field label={period === 'daily' ? 'Date' : period === 'weekly' ? 'Week starts' : 'Month'}>
-            <Input type={period === 'monthly' ? 'month' : 'date'} defaultValue={todayInBusinessTz()} />
+            <Input type={period === 'monthly' ? 'month' : 'date'} value={dateInputValue} onChange={(event) => changeReportDate(event.target.value)} />
           </Field>
         </div>
       </Card>

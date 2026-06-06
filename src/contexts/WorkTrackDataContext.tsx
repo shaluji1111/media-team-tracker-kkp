@@ -32,6 +32,7 @@ import type {
   NotificationItem,
   PasswordResetRequest,
   ProposalStatus,
+  ReportOptions,
   ReportRow,
   SelfRegistrationRequest,
   TaskAssignment,
@@ -63,7 +64,7 @@ interface WorkTrackDataValue {
   auditEvents: AuditEvent[];
   visibleUsersFor: (viewer: AppUser) => AppUser[];
   teamMetricsForUser: (viewer: AppUser) => TeamMetric[];
-  reportRowsForUser: (viewer: AppUser) => ReportRow[];
+  reportRowsForUser: (viewer: AppUser, options?: Partial<ReportOptions>) => ReportRow[];
   logTask: (payload: LogTaskPayload) => Promise<void>;
   proposeTask: (employee: AppUser, payload: { taskName: string; description: string; category: string; proposedTime: number }) => Promise<void>;
   applyLeave: (employee: AppUser, payload: { startDate: string; endDate: string; leaveType: LeaveRequest['leave_type']; reason: string }) => Promise<void>;
@@ -359,7 +360,7 @@ export function WorkTrackDataProvider({ children }: { children: ReactNode }) {
       auditEvents,
       visibleUsersFor: (viewer) => getVisibleUsers(viewer, users),
       teamMetricsForUser: (viewer) => teamMetricsFor(viewer, users, taskLogs, leaves),
-      reportRowsForUser: (viewer) => reportRowsFor(viewer, users, taskLogs, leaves),
+      reportRowsForUser: (viewer, options) => reportRowsFor(viewer, users, taskLogs, leaves, options),
       logTask: async (payload) => {
         const [source, sourceId] = payload.taskId.includes(':') ? payload.taskId.split(':') : ['library', payload.taskId];
         const selected = source === 'custom'

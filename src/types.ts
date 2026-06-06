@@ -185,6 +185,13 @@ export interface ReportRow {
   status: TeamMetric['status'];
 }
 
+export type ReportPeriod = 'daily' | 'weekly' | 'monthly';
+
+export interface ReportOptions {
+  period: ReportPeriod;
+  date: string;
+}
+
 /** Created once by Super Admin; employee checks it off every day. */
 export interface DailyTaskTemplate {
   id: string;
