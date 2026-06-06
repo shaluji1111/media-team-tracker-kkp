@@ -13,7 +13,7 @@ import { demoUsers } from '../data/mockData';
 import { SESSION_IDLE_LIMIT_MS } from '../lib/constants';
 import { isValidJsid, jsidToAuthEmail, normalizeJsid } from '../lib/jsid';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { isTursoConfigured } from '../lib/turso';
+import { isTursoConfigured, turso } from '../lib/turso';
 import type { AppUser } from '../types';
 
 interface AuthContextValue {
@@ -31,6 +31,59 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const DEMO_USER_KEY = 'worktrack.demoUser';
 const LAST_ACTIVITY_KEY = 'worktrack.lastActivity';
+
+type DbRow = Record<string, unknown>;
+
+function nullableString(value: unknown): string | null {
+  return value === null || value === undefined ? null : String(value);
+}
+
+function dbBoolean(value: unknown): boolean {
+  return value === true || value === 1 || value === '1' || value === 'true';
+}
+
+function mapTursoUser(row: DbRow): AppUser {
+  return {
+    id: String(row.id),
+    jsid: String(row.jsid),
+    auth_email: nullableString(row.auth_email) ?? undefined,
+    name: String(row.name),
+    role: String(row.role) as AppUser['role'],
+    department: String(row.department),
+    manager_id: nullableString(row.manager_id),
+    team_lead_id: nullableString(row.team_lead_id),
+    status: String(row.status) as AppUser['status'],
+    created_at: String(row.created_at),
+    first_login_done: dbBoolean(row.first_login_done),
+  };
+}
+
+function persistUser(user: AppUser, remember: boolean) {
+  if (remember) {
+    sessionStorage.removeItem(DEMO_USER_KEY);
+    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(DEMO_USER_KEY);
+    sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(user));
+  }
+}
+
+async function fetchTursoStoredProfile(stored: AppUser): Promise<AppUser | null> {
+  if (!isTursoConfigured || !turso) {
+    return null;
+  }
+  const data = await turso.execute({
+    sql: `
+      SELECT *
+      FROM users
+      WHERE id = ? OR jsid = ?
+      ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END
+      LIMIT 1
+    `,
+    args: [stored.id, stored.jsid, stored.id],
+  });
+  return data.rows[0] ? mapTursoUser(data.rows[0] as DbRow) : null;
+}
 
 async function fetchProfile(userId: string): Promise<AppUser | null> {
   if (!supabase) {
@@ -71,7 +124,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           const stored = localStorage.getItem(DEMO_USER_KEY) ?? sessionStorage.getItem(DEMO_USER_KEY);
           if (stored && active) {
-            setUser(JSON.parse(stored) as AppUser);
+            const parsed = JSON.parse(stored) as AppUser;
+            if (isTursoConfigured) {
+              const profile = await fetchTursoStoredProfile(parsed);
+              if (profile?.status === 'active') {
+                setUser(profile);
+                const remember = Boolean(localStorage.getItem(DEMO_USER_KEY));
+                persistUser(profile, remember);
+              } else {
+                localStorage.removeItem(DEMO_USER_KEY);
+                sessionStorage.removeItem(DEMO_USER_KEY);
+              }
+            } else {
+              setUser(parsed);
+            }
           }
         }
       } finally {
@@ -146,39 +212,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (!isSupabaseConfigured || !supabase) {
-      try {
-        if (isTursoConfigured) {
-          const { createClient } = await import('@libsql/client/web');
-          const client = createClient({
-            url: import.meta.env.VITE_TURSO_DATABASE_URL,
-            authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN,
-          });
-          const data = await client.execute({
-            sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
-            args: [jsid, password],
-          });
-          if (data.rows && data.rows.length > 0) {
-            const matchedUser = data.rows[0] as unknown as AppUser;
-            if (matchedUser.status !== 'active') {
-              throw new Error('This account is not active.');
-            }
-            const normalizedUser = {
-              ...matchedUser,
-              first_login_done: Boolean(matchedUser.first_login_done),
-              manager_id: matchedUser.manager_id ?? null,
-              team_lead_id: matchedUser.team_lead_id ?? null,
-            };
-            setUser(normalizedUser);
-            if (remember) {
-              localStorage.setItem(DEMO_USER_KEY, JSON.stringify(normalizedUser));
-            } else {
-              sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(normalizedUser));
-            }
-            return;
-          }
+      if (isTursoConfigured && turso) {
+        const data = await turso.execute({
+          sql: 'SELECT * FROM users WHERE jsid = ? AND password_hash = ?',
+          args: [jsid, password],
+        });
+        const matchedUser = data.rows[0] ? mapTursoUser(data.rows[0] as DbRow) : null;
+        if (!matchedUser) {
+          throw new Error('Invalid JSID or password.');
         }
-      } catch (err) {
-        console.error('Turso login failed, falling back to demo', err);
+        if (matchedUser.status !== 'active') {
+          throw new Error('This account is not active.');
+        }
+        setUser(matchedUser);
+        persistUser(matchedUser, remember);
+        return;
       }
 
       const demo = demoUsers.find((candidate) => candidate.jsid === jsid);
@@ -189,11 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('This account is not active.');
       }
       setUser(demo);
-      if (remember) {
-        localStorage.setItem(DEMO_USER_KEY, JSON.stringify(demo));
-      } else {
-        sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(demo));
-      }
+      persistUser(demo, remember);
       return;
     }
 
@@ -230,14 +274,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) {
         const next = { ...user, first_login_done: true };
         setUser(next);
-        localStorage.setItem(DEMO_USER_KEY, JSON.stringify(next));
-        if (isTursoConfigured) {
-          const { createClient } = await import('@libsql/client/web');
-          const client = createClient({
-            url: import.meta.env.VITE_TURSO_DATABASE_URL,
-            authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN,
-          });
-          await client.execute({
+        persistUser(next, Boolean(localStorage.getItem(DEMO_USER_KEY)));
+        if (isTursoConfigured && turso) {
+          await turso.execute({
             sql: 'UPDATE users SET password_hash = ?, first_login_done = ? WHERE id = ?',
             args: [password, 1, user.id],
           });
@@ -292,7 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       loading,
-      isDemoMode: !isSupabaseConfigured,
+      isDemoMode: !isSupabaseConfigured && !isTursoConfigured,
       login,
       logout,
       setNewPassword,

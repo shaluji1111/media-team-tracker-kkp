@@ -89,29 +89,37 @@ export const demoRegistrationRequests: SelfRegistrationRequest[] = [];
 
 export const demoPasswordResetRequests: PasswordResetRequest[] = [];
 
+function resolveUserIdentity(user: AppUser, users = demoUsers): AppUser {
+  return users.find((candidate) => candidate.id === user.id)
+    ?? users.find((candidate) => candidate.jsid === user.jsid)
+    ?? user;
+}
+
 export function getChildren(user: AppUser, users = demoUsers): AppUser[] {
-  if (user.role === 'manager') {
-    return users.filter((candidate) => candidate.manager_id === user.id);
+  const resolvedUser = resolveUserIdentity(user, users);
+  if (resolvedUser.role === 'manager') {
+    return users.filter((candidate) => candidate.manager_id === resolvedUser.id);
   }
-  if (user.role === 'team_lead') {
-    return users.filter((candidate) => candidate.team_lead_id === user.id);
+  if (resolvedUser.role === 'team_lead') {
+    return users.filter((candidate) => candidate.team_lead_id === resolvedUser.id);
   }
   return [];
 }
 
 export function getVisibleUsers(user: AppUser, users = demoUsers): AppUser[] {
-  if (user.role === 'super_admin') {
+  const resolvedUser = resolveUserIdentity(user, users);
+  if (resolvedUser.role === 'super_admin') {
     return users;
   }
-  if (user.role === 'manager') {
-    const leads = users.filter((candidate) => candidate.manager_id === user.id);
+  if (resolvedUser.role === 'manager') {
+    const leads = users.filter((candidate) => candidate.manager_id === resolvedUser.id);
     const employees = users.filter((candidate) => leads.some((lead) => lead.id === candidate.team_lead_id));
-    return [user, ...leads, ...employees];
+    return [resolvedUser, ...leads, ...employees];
   }
-  if (user.role === 'team_lead') {
-    return [user, ...users.filter((candidate) => candidate.team_lead_id === user.id)];
+  if (resolvedUser.role === 'team_lead') {
+    return [resolvedUser, ...users.filter((candidate) => candidate.team_lead_id === resolvedUser.id)];
   }
-  return [user];
+  return [resolvedUser];
 }
 
 export function logsForUser(employeeId: string, logs = demoTaskLogs): TaskLog[] {
@@ -128,20 +136,21 @@ export function minutesForEmployee(employeeId: string, logs = demoTaskLogs): num
 }
 
 export function scoreForUser(user: AppUser, users = demoUsers, logs = demoTaskLogs): number | null {
-  if (user.role === 'super_admin') {
+  const resolvedUser = resolveUserIdentity(user, users);
+  if (resolvedUser.role === 'super_admin') {
     return null;
   }
-  if (user.role === 'employee') {
-    return employeeDailyScore(minutesForEmployee(user.id, logs));
+  if (resolvedUser.role === 'employee') {
+    return employeeDailyScore(minutesForEmployee(resolvedUser.id, logs));
   }
-  if (user.role === 'team_lead') {
+  if (resolvedUser.role === 'team_lead') {
     return averageNullable(
       users
-        .filter((candidate) => candidate.team_lead_id === user.id)
+        .filter((candidate) => candidate.team_lead_id === resolvedUser.id)
         .map((employee) => scoreForUser(employee, users, logs)),
     );
   }
-  const leads = users.filter((candidate) => candidate.manager_id === user.id);
+  const leads = users.filter((candidate) => candidate.manager_id === resolvedUser.id);
   return averageNullable(leads.map((lead) => scoreForUser(lead, users, logs)));
 }
 
@@ -157,9 +166,10 @@ function hasApprovedLeaveToday(user: AppUser, leaves = demoLeaves): boolean {
 }
 
 export function teamMetricsFor(viewer: AppUser, users = demoUsers, logs = demoTaskLogs, leaves = demoLeaves): TeamMetric[] {
-  return getVisibleUsers(viewer, users)
+  const resolvedViewer = resolveUserIdentity(viewer, users);
+  return getVisibleUsers(resolvedViewer, users)
     .filter((user) => user.role !== 'super_admin')
-    .filter((user) => (viewer.role === 'employee' ? user.id === viewer.id : user.id !== viewer.id))
+    .filter((user) => (resolvedViewer.role === 'employee' ? user.id === resolvedViewer.id : user.id !== resolvedViewer.id))
     .map((user) => {
       const minutes = user.role === 'employee' ? minutesForEmployee(user.id, logs) : null;
       const approvedLeaveToday = user.role === 'employee' && hasApprovedLeaveToday(user, leaves);

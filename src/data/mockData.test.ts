@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { teamMetricsFor } from './mockData';
+import { reportRowsFor, teamMetricsFor } from './mockData';
 import { todayInBusinessTz } from '../lib/dates';
 import type { AppUser, LeaveRequest } from '../types';
 
@@ -63,5 +63,39 @@ describe('team metrics leave handling', () => {
 
     expect(metric?.status).toBe('on_leave');
     expect(metric?.score).toBeNull();
+  });
+});
+
+describe('report visibility identity resolution', () => {
+  it('uses matching JSID when the viewer has a stale stored id', () => {
+    const lead: AppUser = {
+      id: 'real-lead-id',
+      jsid: 'JS2000',
+      name: 'Lead',
+      role: 'team_lead',
+      department: 'Ops',
+      manager_id: 'manager',
+      team_lead_id: null,
+      status: 'active',
+      created_at: '2026-01-01T00:00:00.000Z',
+      first_login_done: true,
+    };
+    const employee: AppUser = {
+      id: 'employee',
+      jsid: 'JS3000',
+      name: 'Employee',
+      role: 'employee',
+      department: 'Ops',
+      manager_id: null,
+      team_lead_id: lead.id,
+      status: 'active',
+      created_at: '2026-01-01T00:00:00.000Z',
+      first_login_done: true,
+    };
+    const staleViewer = { ...lead, id: 'demo-lead-id' };
+
+    const rows = reportRowsFor(staleViewer, [lead, employee], [], []);
+
+    expect(rows.map((row) => row.employee.id)).toEqual([employee.id]);
   });
 });
